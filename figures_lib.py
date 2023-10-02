@@ -14,8 +14,9 @@ def plotly_sankey(labels, title = "Basic Sankey Diagram", source = None, target 
         link = dict(
         source = source,
         target = target,
-        value = value
-    ))])
+        value = value,
+    ))],
+    )
 
     fig.update_layout(title_text= title, font_size=10)
     return fig
