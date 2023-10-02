@@ -33,12 +33,13 @@ class data_getter():
         else:
             return [d['faq_name'] for d in response['data']]
 
-    def get_sankey_fig(self, bot_id, start_date, end_date, node_name):
+    def get_sankey_fig(self, bot_id, start_date, end_date, node_name, grouper = None):  
         if node_name == '-':
             node_name = ''
 
         params = dict(
                         node_name = node_name,
+                        grouper = grouper,
                         bot_id = bot_id,
                         start_date = start_date,
                         end_date = end_date,
@@ -63,4 +64,10 @@ class data_getter():
             data_flow['value'] = [d['transition_count'] for d in response['data']]
             data_flow['source'] = [data_flow['labels'].index(d['source_action']) for d in response['data']]
             data_flow['target'] = [data_flow['labels'].index(d['target_action']) for d in response['data']]
+            print("comnprueba grouper")
+            print(response['data'][0])
+            if 'grouper' in response['data'][0].keys():
+                print('grouper')
+                data_flow['grouper'] = [d['grouper'] for d in response['data']]
+            data_flow['labels'] = [str.replace(l, '_', ' ').upper() for l in data_flow['labels']]
         return plotly_sankey(**data_flow)
