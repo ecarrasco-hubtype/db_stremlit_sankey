@@ -15,19 +15,19 @@ def plotly_sankey(labels, title = "Basic Sankey Diagram", source = None, target 
 
 
     sankey = go.Sankey(
-                                        node = dict(
-                                        pad = 15,
-                                        thickness = 20,
-                                        line = dict(color = "black", width = 0.5),
-                                        label = labels,
-                                        color = "#491291"
-                                        ),
-                                        link = dict(
-                                        source = source,
-                                        target = target,
-                                        value = value,
-                                        color = color,
-                                        ))
+                        node = dict(
+                        pad = 15,
+                        thickness = 20,
+                        line = dict(color = "black", width = 0.5),
+                        label = labels,
+                        color = "#491291"
+                        ),
+                        link = dict(
+                        source = source,
+                        target = target,
+                        value = value,
+                        color = color,
+                            ))
 
 
     if color_map:
@@ -52,4 +52,5 @@ def plotly_sankey(labels, title = "Basic Sankey Diagram", source = None, target 
     fig = go.Figure(data=traces, layout=layout)
     fig.update_xaxes(visible=False)
     fig.update_yaxes(visible=False)
+    fig.update_layout(title_text=title, font_size=10)
     return fig
