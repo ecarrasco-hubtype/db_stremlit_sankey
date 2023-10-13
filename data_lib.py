@@ -37,11 +37,11 @@ def get_sankey_fig(bot_id, start_date, end_date, node_name):
     if 'error' in response.keys():
         raise Exception(response['error'])
 
-    for d in response['data']:
-        if d['source_action'] == '':
-            d['source_action'] = 'start'
-        if d['target_action'] == '':
-            d['target_action'] = 'end'
+    # for d in response['data']:
+    #     if d['source_action'] == '':
+    #         d['source_action'] = 'start'
+    #     if d['target_action'] == '':
+    #         d['target_action'] = 'end'
 
     data_flow = {
         'title': "",
@@ -60,7 +60,6 @@ def get_sankey_fig(bot_id, start_date, end_date, node_name):
 
 
 def get_funnel(bot_id, start_date, end_date, node_names):
-    print(node_names)
     params = dict(
         bot_id=bot_id,
         start_date=start_date,
@@ -68,6 +67,19 @@ def get_funnel(bot_id, start_date, end_date, node_names):
         steps=node_names,
     )
     response = get_api('funnel', params=params)
+    if 'error' in response.keys():
+        raise Exception(response['error'])
+    else:
+        return response['data']
+
+
+def get_handoff_list(bot_id, start_date, end_date):
+    params = dict(
+        bot_id=bot_id,
+        start_date=start_date,
+        end_date=end_date,
+    )
+    response = get_api('hand_over_nodes', params=params)
     if 'error' in response.keys():
         raise Exception(response['error'])
     else:

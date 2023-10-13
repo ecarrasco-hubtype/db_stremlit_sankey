@@ -1,4 +1,4 @@
-from data_lib import get_bot_list_nodes, get_sankey_fig, get_funnel
+from data_lib import get_bot_list_nodes, get_sankey_fig, get_funnel, get_handoff_list
 
 import streamlit as st
 from streamlit_sortables import sort_items
@@ -34,6 +34,7 @@ def init_st():
 
         st.session_state['fig_sankey'] = None
         st.session_state['fig_funnel'] = None
+        st.session_state['df_handoff'] = None
 
 
 def main_selector():
@@ -63,7 +64,7 @@ def main_selector():
 
 
 def sk_section():
-    st.header('SANKLEY')
+    st.header('SANKEY')
     set_necessary_inputs = all(
         [st.session_state['bot_id'], st.session_state['start_date'], st.session_state['end_date']])
     if set_necessary_inputs and st.button('Update Sankey'):
@@ -73,7 +74,16 @@ def sk_section():
                                                         node_name=st.session_state['node_name'],
                                                         #    grouper=st.session_state['grouper']
                                                         )
+        handoff_list = get_handoff_list(bot_id=st.session_state['bot_id'],
+                                        start_date=st.session_state['start_date'],
+                                        end_date=st.session_state['end_date'])
+
+        df_handoff = pd.DataFrame(handoff_list)
+        st.session_state['df_handoff'] = df_handoff
+    if st.session_state['df_handoff'] is not None:
+        st.table(st.session_state['df_handoff'])
     if st.session_state['fig_sankey']:
+
         st.plotly_chart(st.session_state['fig_sankey'], use_container_width=False,
                         config={'displaylogo': False})
 
