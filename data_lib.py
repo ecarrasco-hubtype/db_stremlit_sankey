@@ -1,6 +1,5 @@
 from tb import conect_tb
 from figures_lib import plotly_sankey
-import os
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -11,37 +10,29 @@ class data_getter():
 
     def set_tolken(self, token):
         self.token = token
-        self.tb = conect_tb(self.token)
 
-    def get_bot_list(self, org_id='98bb4472-1fba-4a2e-8a92-9e2ca0ad4ffc'):
-        token = os.getenv('token_list_bot_ids')
-        headers = {'Authorization': f'Bearer {token}'}
+    def get_bot_list_nodes(self, org_id='98bb4472-1fba-4a2e-8a92-9e2ca0ad4ffc'):
+
         params = dict(
             org_id=org_id,
         )
         response = self.tb.get_api(
-            'bot_list_from_org_id', params=params, headers=headers)
+            'bot_id_nodes_from_org_id', params=params)
         if 'error' in response.keys():
             raise Exception(response['error'])
-        else:
-            return [d['bot_id'] for d in response['data']]
 
-    def get_node_list(self, bot_id):
-        params = dict(
-            bot_id=bot_id,
-            token=os.getenv('token_node_list')
-        )
-        response = self.tb.get_api('node_list_from_bot_id', params=params)
-        if 'error' in response.keys():
-            raise Exception(response['error'])
-        else:
-            return [d['faq_name'] for d in response['data']]
+        dict_group = {}
+        for diccionario in response['data']:
+            bot_id = diccionario["bot_id"]
+            faq_name = diccionario["faq_name"]
+            if bot_id not in dict_group.keys():
+                dict_group[bot_id] = []
+            else:
+                dict_group[bot_id].append(faq_name)
+        return dict_group
 
     def get_sankey_fig(self, bot_id, start_date, end_date, node_name, grouper=None):
-        if node_name == '-':
-            node_name = ''
-        token = os.getenv('token_sank')
-        headers = {'Authorization': f'Bearer {token}'}
+
         params = dict(
             node_name=node_name,
             grouper=grouper,
@@ -50,7 +41,7 @@ class data_getter():
             end_date=end_date,
         )
         response = self.tb.get_api(
-            'bot_sankey', params=params,  headers=headers)
+            'sankey', params=params)
 
         if 'error' in response.keys():
             raise Exception(response['error'])
@@ -72,23 +63,21 @@ class data_getter():
             d['source_action']) for d in response['data']]
         data_flow['target'] = [data_flow['labels'].index(
             d['target_action']) for d in response['data']]
+        data_flow['labels'] = [l.capitalize() for l in data_flow['labels']]
 
-        if 'grouper' in response['data'][0].keys():
+        if grouper != None:
             data_flow['grouper'] = [d['grouper'] for d in response['data']]
-        data_flow['labels'] = [str.replace(
-            l, '_', ' ').upper() for l in data_flow['labels']]
+
         return plotly_sankey(**data_flow)
 
     def get_funnel(self, bot_id, start_date, end_date, node_names, grouper=None):
-        token = os.getenv('token_funnel')
-        headers = {'Authorization': f'Bearer {token}'}
         params = dict(
             bot_id=bot_id,
             start_date=start_date,
             end_date=end_date,
             steps=node_names,
         )
-        response = self.tb.get_api('funnel', params=params,  headers=headers)
+        response = self.tb.get_api('funnel', params=params)
 
         if 'error' in response.keys():
             raise Exception(response['error'])
