@@ -39,17 +39,20 @@ def init_st():
 
 
 def main_selector():
-    st.header('Multiasistencia')
+    st_logo, st_org, _ = st.columns([2, 3, 10])
+    st_logo.write('')
+    st_logo.image('./img/ht_logo.png', width=150)
+    st_org.header('MULTIASISTENCIA')
     st_1, st_2, st_3, st_4, _ = st.columns([2, 3, 1, 1, 8])
 
     st.session_state['list_bots'] = st.session_state['dict_bot_id_nodes'].keys()
     bot_id = st_1.selectbox(
-        'Bot', st.session_state['list_bots'], index=None, format_func=lambda x: bot_id_name_dic.get(x, x))
+        'BOT', st.session_state['list_bots'], index=None, format_func=lambda x: bot_id_name_dic.get(x, x))
 
     st.session_state['list_nodes'] = st.session_state['dict_bot_id_nodes'].get(
         bot_id, [])
     node_source = st_2.selectbox(
-        'Origin Node', st.session_state['list_nodes'], format_func=clean_node_names, index=None)
+        'SOURCE NODE', st.session_state['list_nodes'], format_func=clean_node_names, index=None)
 
     start_date = st_3.date_input(
         'FROM', value=today - dt.timedelta(days=21), min_value=st.session_state['min_date'], max_value=today, key=None)
@@ -115,6 +118,12 @@ def sk_section():
                           config={
             'displaylogo': False}
         )
+    else:
+        for _ in range(5):
+            st.header(' ')
+        _, st_logo, _ = st.columns([10, 3, 10])
+        st_logo.image('./img/ht_circle.png', width=150, use_column_width=True)
+        st_logo.warning('Select a bot and date range')
 
 
 # NOT USED:
