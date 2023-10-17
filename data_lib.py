@@ -16,18 +16,19 @@ def get_bot_list_nodes(org_id='98bb4472-1fba-4a2e-8a92-9e2ca0ad4ffc'):
     dict_group = {}
     for diccionario in response['data']:
         bot_id = diccionario["bot_id"]
-        faq_name = diccionario["faq_name"]
+        node = diccionario["node"]
         if bot_id not in dict_group.keys():
             dict_group[bot_id] = []
         else:
-            dict_group[bot_id].append(faq_name)
+            dict_group[bot_id].append(node)
+
     return dict_group
 
 
-def get_sankey_fig(bot_id, start_date, end_date, node_name):
+def get_sankey_fig(bot_id, start_date, end_date, node_source, n_filter=0):
 
     params = dict(
-        node_name=node_name,
+        node_source=node_source,
         bot_id=bot_id,
         start_date=start_date,
         end_date=end_date,
@@ -37,26 +38,7 @@ def get_sankey_fig(bot_id, start_date, end_date, node_name):
     if 'error' in response.keys():
         raise Exception(response['error'])
 
-    # for d in response['data']:
-    #     if d['source_action'] == '':
-    #         d['source_action'] = 'start'
-    #     if d['target_action'] == '':
-    #         d['target_action'] = 'end'
-
-    data_flow = {
-        'title': "",
-        'labels': list(set([d['source_action'] for d in response['data']] + [d['target_action'] for d in response['data']]))
-    }
-
-    data_flow['value'] = [d['transition_count']
-                          for d in response['data']]
-    data_flow['source'] = [data_flow['labels'].index(
-        d['source_action']) for d in response['data']]
-    data_flow['target'] = [data_flow['labels'].index(
-        d['target_action']) for d in response['data']]
-    data_flow['labels'] = [l.capitalize() for l in data_flow['labels']]
-
-    return plotly_sankey(**data_flow)
+    return response['data']
 
 
 def get_funnel(bot_id, start_date, end_date, node_names):
@@ -73,13 +55,44 @@ def get_funnel(bot_id, start_date, end_date, node_names):
         return response['data']
 
 
-def get_handoff_list(bot_id, start_date, end_date):
+def get_handoff_top(bot_id, start_date, end_date, k=3):
     params = dict(
         bot_id=bot_id,
         start_date=start_date,
         end_date=end_date,
+        k=k,
     )
     response = get_api('hand_over_nodes', params=params)
+    if 'error' in response.keys():
+        raise Exception(response['error'])
+    else:
+        return response['data']
+
+
+def get_path_list(bot_id, start_date, end_date, k=5):
+    params = dict(
+        bot_id=bot_id,
+        start_date=start_date,
+        end_date=end_date,
+        k=k,
+    )
+    response = get_api(
+        'pipe_most_common_path_from_bot_with_hand_off', params=params)
+    if 'error' in response.keys():
+        raise Exception(response['error'])
+    else:
+        return response['data']
+
+
+def get_loop_nodes(bot_id, start_date, end_date, k=5):
+    params = dict(
+        bot_id=bot_id,
+        start_date=start_date,
+        end_date=end_date,
+        k=k,
+    )
+    response = get_api(
+        'node_loops', params=params)
     if 'error' in response.keys():
         raise Exception(response['error'])
     else:

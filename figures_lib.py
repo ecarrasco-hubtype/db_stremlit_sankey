@@ -1,16 +1,22 @@
 import plotly.graph_objects as go
-import plotly.colors as colors
-
-palette = colors.qualitative.Plotly
 
 
-def plotly_sankey(labels, title="Basic Sankey Diagram", source=None, target=None, value=None, grouper=None):
-    color_map = None
-    if grouper:
-        color_map = {k: palette[i] for i, k in enumerate(set(grouper))}
-        color = [color_map[k] for k in grouper]
-    else:
-        color = "#F6F6F6"
+def plotly_sankey(data, max_path_len=None, n_filter=1, title="Sankey Diagram", ):
+    # Filter data_flow with transitions less than n_filter
+    data = [d for d in data
+            if d['transition_count'] >= n_filter]
+
+    # filter maxlen path by sufix in string las 3 chars
+    if max_path_len is not None:
+        data = [d for d in data
+                if int(d['target_action'][-3:]) <= max_path_len]
+
+    labels = list(set([d['source_action']
+                  for d in data] + [d['target_action'] for d in data]))
+
+    value = [d['transition_count'] for d in data]
+    target = [labels.index(d['target_action']) for d in data]
+    source = [labels.index(d['source_action']) for d in data]
 
     sankey = go.Sankey(
         node=dict(
@@ -24,31 +30,12 @@ def plotly_sankey(labels, title="Basic Sankey Diagram", source=None, target=None
             source=source,
             target=target,
             value=value,
-            color=color,
+            color="#F6F6F6",
         ))
 
-    legend = []
-    if color_map:
-
-        lengend_entries = [[v, k] for k, v in color_map.items()]
-        for entry in lengend_entries:
-            legend.append(
-                go.Scatter(
-                    mode="markers",
-                    x=[None],
-                    y=[None],
-                    marker=dict(size=10, color=entry[0], symbol="square"),
-                    name=entry[1],
-                )
-            )
-
-    traces = [sankey] + legend if color_map else [sankey]
-    layout = go.Layout(
-        showlegend=True,
-        plot_bgcolor="rgba(0,0,0,0)",
-    )
-    fig = go.Figure(data=traces, layout=layout)
+    fig = go.Figure(data=[sankey])
     fig.update_xaxes(visible=False)
     fig.update_yaxes(visible=False)
-    fig.update_layout(title_text=title, font_size=10)
+    if title != '':
+        fig.update_layout(title_text=title, font_size=10)
     return fig
