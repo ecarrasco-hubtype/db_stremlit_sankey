@@ -2,9 +2,8 @@ from data_lib import get_bot_list_nodes, get_sankey_fig, get_funnel, get_handoff
 from figures_lib import plotly_sankey
 
 import streamlit as st
-from streamlit_sortables import sort_items
+# from streamlit_sortables import sort_items
 
-import pandas as pd
 import datetime as dt
 from config import bot_id_name_dic
 
@@ -105,9 +104,10 @@ def sk_section():
         st_1.header(' ')
         st_1.header(' ')
         st.session_state['n_filter'] = st_1.slider(
-            'Bands wider than  ', value=1, min_value=1, max_value=max_transitions, step=1)
+            'MIN. BAND WIDTH', value=1, min_value=1, max_value=max_transitions, step=1)
+        st_1.header(' ')
         st.session_state['max_len_path'] = st_1.slider(
-            'Max Path length', value=max_len_sanky//2, min_value=1, max_value=max_len_sanky, step=1)
+            'MAX. PATH LENGTH', value=max_len_sanky//4, min_value=1, max_value=max_len_sanky, step=1)
 
         st_2.plotly_chart(plotly_sankey(st.session_state['sankey_data'],
                                         n_filter=st.session_state['n_filter'],
