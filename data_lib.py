@@ -25,16 +25,18 @@ def get_bot_list_nodes(org_id='98bb4472-1fba-4a2e-8a92-9e2ca0ad4ffc'):
     return dict_group
 
 
-def get_sankey_fig(bot_id, start_date, end_date, node_source, n_filter=0):
+def get_sankey_fig(bot_id, start_date, end_date, node_source, min_width, max_steps):
 
     params = dict(
         node_source=node_source,
         bot_id=bot_id,
         start_date=start_date,
         end_date=end_date,
+        max_steps=max_steps,
+        min_width=min_width,
     )
+    print(params)
     response = get_api('sankey', params=params)
-
     if 'error' in response.keys():
         raise Exception(response['error'])
 

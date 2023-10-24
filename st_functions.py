@@ -20,6 +20,15 @@ def clean_node_names(x):
     return x.replace('_', ' ').capitalize().upper()
 
 
+def st_circle_logo_message(message='Select a bot and date range'):
+    for _ in range(5):
+        st.header(' ')
+    _, st_logo, _ = st.columns([10, 3, 10])
+    st_logo.image('./img/ht_circle.png',
+                  width=150, use_column_width=True)
+    st_logo.warning(message)
+
+
 def init_st():
     if 'init' not in st.session_state:
         st.set_page_config(layout="wide")
@@ -33,8 +42,8 @@ def init_st():
             '2023-09-12', '%Y-%m-%d')
 
         st.session_state['sankey_data'] = None
-        st.session_state['n_filter'] = None
-        st.session_state['max_len_path'] = None
+        st.session_state['min_width'] = 1
+        st.session_state['max_steps'] = None
 
 
 def main_selector():
@@ -42,12 +51,13 @@ def main_selector():
     st_logo.write('')
     st_logo.image('./img/ht_logo.png', width=150)
     st_org.header('MULTIASISTENCIA')
-    st_1, st_2, st_3, st_4, _ = st.columns([2, 3, 1, 1, 8])
+    st_1, st_2, st_3, st_4, st_5, st_6 = st.columns([2, 3, 1, 1, 1, 1])
 
     st.session_state['list_bots'] = st.session_state['dict_bot_id_nodes'].keys()
+    bot_list = [b for b in st.session_state['list_bots']
+                if b in bot_id_name_dic.keys()]
     bot_id = st_1.selectbox(
-        'BOT', st.session_state['list_bots'], index=None, format_func=lambda x: bot_id_name_dic.get(x, x))
-
+        'BOT', bot_list, index=None, format_func=lambda x: bot_id_name_dic.get(x, x))
     st.session_state['list_nodes'] = st.session_state['dict_bot_id_nodes'].get(
         bot_id, [])
     node_source = st_2.selectbox(
@@ -59,10 +69,22 @@ def main_selector():
     end_date = st_4.date_input(
         'TO', value=today, min_value=st.session_state['min_date'], max_value=today, key=None)
 
+    min_width = st_5.number_input(
+        'MIN. BAND WIDTH', value=1, min_value=1, max_value=10000)
+
+    max_steps = st_6.number_input(
+        'MAX. PATH LENGTH', value=5, min_value=1, max_value=100)
+    if bot_id is None:
+        st_circle_logo_message()
+        return
+
     if bot_id != st.session_state['bot_id'] or \
             node_source != st.session_state['node_source'] or \
             start_date != st.session_state['start_date'] or \
-            end_date != st.session_state['end_date']:
+            end_date != st.session_state['end_date'] or \
+            min_width != st.session_state['min_width'] or \
+            max_steps != st.session_state['max_steps']:
+
         st.session_state['bot_id'] = bot_id
         st.session_state['node_source'] = node_source
         st.session_state['start_date'] = start_date
@@ -72,12 +94,14 @@ def main_selector():
             '%Y-%m-%d')
         st.session_state['end_date'] = st.session_state['end_date'].strftime(
             '%Y-%m-%d')
+        st.session_state['min_width'] = min_width
+        st.session_state['max_steps'] = max_steps
 
 
 def sk_section():
 
     set_necessary_inputs = all(
-        [st.session_state['bot_id'], st.session_state['start_date'], st.session_state['end_date']])
+        [st.session_state['bot_id'], st.session_state['start_date'], st.session_state['end_date'], st.session_state['min_width'], st.session_state['max_steps']])
 
     if set_necessary_inputs and st.session_state['update_sankey']:
         st.session_state['update_sankey'] = False
@@ -86,45 +110,20 @@ def sk_section():
                                                          start_date=st.session_state['start_date'],
                                                          end_date=st.session_state['end_date'],
                                                          node_source=st.session_state['node_source'],
-                                                         n_filter=st.session_state['n_filter']
+                                                         max_steps=st.session_state['max_steps'],
+                                                         min_width=st.session_state['min_width'],
                                                          )
 
-    if st.session_state['sankey_data'] is not None:
-        max_len_sanky = max([int(d['target_action'][-3:])
-                             for d in st.session_state['sankey_data']])
-        transitions_values = [d['transition_count']
-                              for d in st.session_state['sankey_data']]
-        max_transitions = max(transitions_values)
-
-        st_1, _, st_2 = st.columns([2, 1, 20])
-
-        st_1.header(' ')
-        st_1.header(' ')
-        st_1.header(' ')
-        st_1.header(' ')
-        st_1.header(' ')
-        st.session_state['n_filter'] = st_1.slider(
-            'MIN. BAND WIDTH', value=1, min_value=1, max_value=max_transitions, step=1)
-        st_1.header(' ')
-        st.session_state['max_len_path'] = st_1.slider(
-            'MAX. PATH LENGTH', value=max_len_sanky//4, min_value=1, max_value=max_len_sanky, step=1)
-
-        st_2.plotly_chart(plotly_sankey(st.session_state['sankey_data'],
-                                        n_filter=st.session_state['n_filter'],
-                                        max_path_len=st.session_state['max_len_path'],
-                                        title='',
-                                        ),
-                          use_container_width=True,
-                          config={
-            'displaylogo': False}
-        )
-    else:
-        for _ in range(5):
-            st.header(' ')
-        _, st_logo, _ = st.columns([10, 3, 10])
-        st_logo.image('./img/ht_circle.png', width=150, use_column_width=True)
-        st_logo.warning('Select a bot and date range')
-
+        try:
+            st.plotly_chart(plotly_sankey(st.session_state['sankey_data'],
+                                          title='',
+                                          ),
+                            use_container_width=True,
+                            config={
+                'displaylogo': False}
+            )
+        except Exception as e:
+            st_circle_logo_message(message='No data available')
 
 # NOT USED:
 # def funnel_section():
