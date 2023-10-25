@@ -20,7 +20,7 @@ def clean_node_names(x):
     return x.replace('_', ' ').capitalize().upper()
 
 
-def st_circle_logo_message(message='🤖 SELECT A BOT TO START 🚀'):
+def st_circle_logo_message(message='🤖 SELECT A BOT TO START  🚀'):
     for _ in range(5):
         st.header(' ')
     _, st_logo, _ = st.columns([11, 4, 11])
@@ -49,12 +49,11 @@ def init_st():
 
 
 def main_selector():
-    st_logo, st_org, _ = st.columns([2, 3, 10])
-    st_logo.write('')
-    st_logo.image('./img/ht_logo.png', width=150)
-    st_org.header('MULTIASISTENCIA')
-    st_1, st_2, st_3, st_4, st_5 = st.columns(
-        [2, 2, 1, 1, 1])
+    st_logos, st_1, st_2, st_3, st_4, st_5 = st.columns(
+        [2, 2, 2, 1, 1, 1])
+    st_logos.write('')
+    st_logos.image('./img/ht_logo.png', width=150)
+    st_logos.header('MULTIASISTENCIA')
 
     st.session_state['list_bots'] = list(st.session_state['dict_bot_id_nodes'].keys(
     )) + ['HANDOFF'] if st.session_state['dict_bot_id_nodes'].keys() is not None else None
