@@ -57,7 +57,7 @@ def plotly_sankey(data, title="Sankey Diagram", ):
     map_colors = dict(zip(df_nodes['node'].unique(), colors))
     sankey = go.Sankey(
         # arrangement="perpendicular",
-        # arrangement="snap",
+        arrangement="snap",
         node=dict(
             pad=15,
             thickness=20,
@@ -80,6 +80,17 @@ def plotly_sankey(data, title="Sankey Diagram", ):
 
     fig = go.Figure(data=[sankey])
     # size
+    # fig.update_layout(
+    #     autosize=True,
+    #     height=300,
+    #     margin=dict(
+    #         l=0,
+    #         r=0,
+    #         b=0,
+    #         t=0,
+    #         pad=0
+    #     ),
+    # )
 
     fig.update_xaxes(visible=False)
     fig.update_yaxes(visible=False)

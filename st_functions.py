@@ -71,10 +71,10 @@ def main_selector():
 
     st_2.write('HANDOFF FILTERS')
     st_l, st_r = st_2.columns([1, 1])
-    include_handoff = st_l.checkbox(
+    include_handoff = st_l.toggle(
         'HANDOFF', value=True, help="Include sessions with handoff in the graph", disabled=bot_id is None)
-    include_no_handoff = st_r.checkbox(
-        'NO HANDOFF', value=True, help="Exclude sessions with handoff in the graph", disabled=bot_id is None)
+    include_no_handoff = st_r.toggle(
+        'NO HANDOFF', value=True, help="Exclude sessions with handoff from the graph", disabled=bot_id is None)
 
     filter_out_nodes = st_2.multiselect('FILTER OUT NODES', list(),
                                         format_func=clean_node_names, max_selections=5, help="Exclude some nodes from the graph")
@@ -85,7 +85,7 @@ def main_selector():
     end_date = st_3.date_input(
         'TO', value=today, min_value=st.session_state['min_date'], max_value=today, disabled=bot_id is None)
 
-    min_width = st_4.number_input('MIN. USERS PATH', value=1, min_value=1, max_value=10000,
+    min_width = st_4.number_input('MIN. USERS PATH', value=3, min_value=1, max_value=10000,
                                   help="Remove less frequent links selecting a minimum number of users between nodes to be shown")
 
     max_steps = st_4.number_input('MAX. NUMBER STEPS', value=5, min_value=2,
