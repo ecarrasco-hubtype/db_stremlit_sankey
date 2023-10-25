@@ -20,14 +20,14 @@ def pandas_from_sankey_data(data):
     df_nodes = pd.concat(
         [df_targets, df_sorces[df_sorces.order == 1]]).drop_duplicates()
 
-    df_nodes['x'] = (df_nodes['order'] - 1) / df_nodes['order'].max()
+    df_nodes['x'] = (df_nodes['order'] - 1) / (df_nodes['order'].max()+1)
     df_nodes['x'] = df_nodes['x']/df_nodes['x'].max()
 
     df_nodes.sort_values('node_volume', ascending=False, inplace=True)
     df_nodes['y'] = df_nodes.groupby(
         'order')['node_volume'].transform('cumsum')
     df_nodes['y'] = df_nodes.groupby(
-        'order')['y'].transform(lambda x: (x - x.min()) / (x.max() - x.min()))
+        'order')['y'].transform(lambda y: (y + 0.1 - y.min()) / (y.max() - y.min()) - 0.05)
 
     df_nodes = df_nodes.reset_index(drop=True).reset_index(
         drop=False).rename(columns={'index': 'i_node'})
@@ -36,6 +36,9 @@ def pandas_from_sankey_data(data):
         'source_node', 'source_order'], right_on=['node', 'order'], suffixes=('', '_node'))['i_node'].fillna(-1).astype(int)
     df['i_target'] = df.merge(df_nodes[['node', 'order', 'i_node']], how='left', left_on=[
         'target_node', 'target_order'], right_on=['node', 'order'], suffixes=('', '_node'))['i_node'].fillna(-1).astype(int)
+
+    df['color'] = df['session_with_handoff'].map(
+        {0: '#F6F6F6', 1: '#D3D3D3'})
 
     return df, df_nodes
 
@@ -64,15 +67,15 @@ def plotly_sankey(data, title="Sankey Diagram", ):
             x=df_nodes['x'].values,
             y=df_nodes['y'].values,
             customdata=df_nodes['order'].values,
-            hovertemplate='%{label}<br>Volume: %{value}<br>Order: %{customdata}',
+            hovertemplate='NODE: %{label}<br>TRAFFIC: %{value}<br>STEP: %{customdata}',
         ),
         link=dict(
             arrowlen=30,
             source=df['i_source'].values,
             target=df['i_target'].values,
             value=df['transition_count'].values,
-            color="#F6F6F6",
-            hovertemplate='Source: %{source.label}<br>Target: %{target.label}<br>Value: %{value}',
+            color=df['color'].values,
+            hovertemplate='FROM: %{source.label}<br>TO: %{target.label}<br> TRAFFIC: %{value}',
         ))
 
     fig = go.Figure(data=[sankey])
