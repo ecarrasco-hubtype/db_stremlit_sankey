@@ -26,9 +26,6 @@ def get_bot_list_nodes(org_id='98bb4472-1fba-4a2e-8a92-9e2ca0ad4ffc'):
 
 
 def get_sankey_fig(bot_id, start_date, end_date, node_source, min_width, max_steps, include_handoff, include_no_handoff, filter_out_nodes):
-
-    if filter_out_nodes == []:
-        filter_out_nodes = None
     params = dict(
         node_source=node_source,
         bot_id=bot_id,
@@ -38,7 +35,8 @@ def get_sankey_fig(bot_id, start_date, end_date, node_source, min_width, max_ste
         min_width=min_width,
         include_handoff=include_handoff,
         include_no_handoff=include_no_handoff,
-        filter_out_nodes=filter_out_nodes,
+        filter_out_nodes=','.join(
+            filter_out_nodes) if filter_out_nodes else None,
     )
     print(params)
     response = get_api('sankey', params=params)

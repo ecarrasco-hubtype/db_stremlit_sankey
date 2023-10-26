@@ -49,12 +49,6 @@ def plotly_sankey(data, title="Sankey Diagram", ):
     if df is None or df_nodes is None:
         return None
 
-    n_nodes = len(df_nodes.node.unique())
-
-    colors = px.colors.qualitative.Plotly * \
-        (round(n_nodes/len(px.colors.qualitative.Plotly)) + 2)
-
-    map_colors = dict(zip(df_nodes['node'].unique(), colors))
     sankey = go.Sankey(
         # arrangement="perpendicular",
         arrangement="snap",
@@ -63,7 +57,8 @@ def plotly_sankey(data, title="Sankey Diagram", ):
             thickness=20,
             line=dict(color="black", width=0.5),
             label=df_nodes['node'].values,
-            color=df_nodes['node'].map(map_colors).to_list(),
+            color=df_nodes['node'].map(
+                st.session_state['color_map']).to_list(),
             x=df_nodes['x'].values,
             y=df_nodes['y'].values,
             customdata=df_nodes['order'].values,
