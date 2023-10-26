@@ -1,16 +1,14 @@
-from data_lib import get_bot_list_nodes, get_sankey_fig, get_funnel, get_handoff_top, get_path_list, get_loop_nodes
+# , get_funnel, get_handoff_top, get_path_list, get_loop_nodes
+from data_lib import get_bot_list_nodes, get_sankey_fig
 from figures_lib import plotly_sankey
 
 import streamlit as st
-# from streamlit_sortables import sort_items
+
 import plotly.express as px
 
 import datetime as dt
 from config import bot_id_name_dic
 
-import importlib
-import data_lib
-importlib.reload(data_lib)
 
 today = dt.datetime.today()
 
