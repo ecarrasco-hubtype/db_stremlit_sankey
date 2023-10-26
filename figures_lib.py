@@ -38,7 +38,7 @@ def pandas_from_sankey_data(data):
         'target_node', 'target_order'], right_on=['node', 'order'], suffixes=('', '_node'))['i_node'].fillna(-1).astype(int)
 
     df['color'] = df['session_with_handoff'].map(
-        {0: '#F6F6F6', 1: '#D3D3D3'})
+        {0: 'rgba(246, 246, 246, 0.8)', 1: 'rgba(211, 211, 211, 0.8)'})
 
     return df, df_nodes
 
@@ -70,6 +70,7 @@ def plotly_sankey(data, title="Sankey Diagram", ):
             target=df['i_target'].values,
             value=df['transition_count'].values,
             color=df['color'].values,
+            line=dict(width=0.5, color='rgba(0,0,0, 0.5)'),
             hovertemplate='FROM: %{source.label}<br>TO: %{target.label}<br> TRAFFIC: %{value}',
         ))
 
