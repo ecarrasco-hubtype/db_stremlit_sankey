@@ -20,7 +20,7 @@ def pandas_from_sankey_data(data):
         [df_targets, df_sorces[df_sorces.order == 1]]).drop_duplicates()
 
     df_nodes['x'] = (df_nodes['order'] - 1) / (df_nodes['order'].max()+1)
-    df_nodes['x'] = 0.99 * df_nodes['x']/df_nodes['x'].max()
+    df_nodes['x'] = 0.9 * df_nodes['x']/df_nodes['x'].max()
 
     df_nodes.sort_values('node_volume', ascending=False, inplace=True)
     df_nodes['y'] = df_nodes.groupby(
