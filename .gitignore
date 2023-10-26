@@ -4,3 +4,4 @@ streamlit/
 test_2.csv
 test.csv
 
+secrets.toml
