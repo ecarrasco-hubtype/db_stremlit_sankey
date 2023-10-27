@@ -1,5 +1,6 @@
 import plotly.graph_objects as go
 import pandas as pd
+import numpy as np
 import streamlit as st
 
 
@@ -22,11 +23,11 @@ def pandas_from_sankey_data(data):
     df_nodes['x'] = (df_nodes['order'] - 1) / (df_nodes['order'].max()+1)
     df_nodes['x'] = 0.9 * df_nodes['x']/df_nodes['x'].max()
 
-    df_nodes.sort_values('node_volume', ascending=False, inplace=True)
-    df_nodes['y'] = df_nodes.groupby(
-        'order')['node_volume'].transform('cumsum')
-    df_nodes['y'] = df_nodes.groupby(
-        'order')['y'].transform(lambda y: (y + 0.1 - y.min()) / (y.max() - y.min()) - 0.05)
+    df_nodes['y_cumsum'] = df_nodes.groupby(
+        'order')['node_volume'].transform(lambda v: v.sort_values(ascending=False).cumsum().shift(1).fillna(0))
+
+    df_nodes['y'] = df_nodes.y_cumsum + df_nodes.node_volume / 2
+    df_nodes['y'] = df_nodes.y / df_nodes.y.max()
 
     df_nodes = df_nodes.reset_index(drop=True).reset_index(
         drop=False).rename(columns={'index': 'i_node'})
@@ -60,8 +61,9 @@ def plotly_sankey(data, title="Sankey Diagram", ):
                 st.session_state['color_map']).to_list(),
             x=df_nodes['x'].values,
             y=df_nodes['y'].values,
-            customdata=df_nodes['order'].values,
-            hovertemplate='NODE: %{label}<br>TRAFFIC: %{value}<br>STEP: %{customdata}',
+            customdata=np.stack((df_nodes['order'], df_nodes['node_volume'],
+                                 df_nodes['x'], df_nodes['y']), axis=-1),
+            hovertemplate='NODE: %{label}<br>TRAFFIC: %{customdata[1]}<br>ORDER: %{customdata[0]}<br>X: (%{customdata[2]:.2f},<br>Y: %{customdata[3]:.2f})',
         ),
         link=dict(
             arrowlen=30,
@@ -74,18 +76,6 @@ def plotly_sankey(data, title="Sankey Diagram", ):
         ))
 
     fig = go.Figure(data=[sankey])
-    # size
-    # fig.update_layout(
-    #     autosize=True,
-    #     height=300,
-    #     margin=dict(
-    #         l=0,
-    #         r=0,
-    #         b=0,
-    #         t=0,
-    #         pad=0
-    #     ),
-    # )
 
     fig.update_xaxes(visible=False)
     fig.update_yaxes(visible=False)

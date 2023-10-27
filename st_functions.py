@@ -25,7 +25,7 @@ def st_circle_logo_message(message='🤖 SELECT A BOT TO START 🚀'):
     _, st_logo, _ = st.columns([11, 4, 11])
     st_logo.image('./img/ht_circle.png',
                   width=70, use_column_width=True)
-    st_logo.warning(message)
+    st_logo.success(message)
 
 
 def init_st():
@@ -58,11 +58,12 @@ def init_st():
 
 
 def main_selector():
-    st_logos, st_1, st_2, st_3, st_4, st_5 = st.columns(
-        [2, 2, 2, 1, 1, 1])
-    st_logos.write('')
-    st_logos.image('./img/ht_logo.png', width=150)
-    st_logos.header('MULTIASISTENCIA')
+    st_logo, st_ma, _ = st.columns([1, 1, 10])
+    st_ma.write('MULTIASISTENCIA')
+    st_logo.image('./img/ht_logo.png', width=100)
+
+    st_1, st_2, st_3, st_4 = st.columns(
+        [3, 3, 1, 1])
 
     st.session_state['list_bots'] = list(st.session_state['dict_bot_id_nodes'].keys(
     )) + ['HANDOFF'] if st.session_state['dict_bot_id_nodes'].keys() is not None else None
@@ -87,6 +88,7 @@ def main_selector():
 
     st_2.write('HANDOFF FILTERS')
     st_l, st_r = st_2.columns([1, 1])
+
     include_handoff = st_l.toggle(
         'HANDOFF', value=True, help="Include sessions with handoff in the graph", disabled=bot_id is None)
     include_no_handoff = st_r.toggle(
@@ -169,7 +171,7 @@ def sk_section():
                 'displaylogo': False}
             )
         except Exception as e:
-            st_circle_logo_message(message=" NO DATA FOUND ")
+            st_circle_logo_message(message=str(e))  # " NO DATA FOUND ")
 
 
 # NOT USED:
