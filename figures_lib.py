@@ -34,8 +34,8 @@ def pandas_from_sankey_data(data):
     df_nodes['volume_per_order'] = df_nodes.groupby(
         'order')['node_volume'].transform('sum')
 
-    df_nodes['y'] = df_nodes['y_cum'] / (df_nodes['volume_per_order'])
-    # df_nodes['y'] = df_nodes['y_cum'] / (df_nodes['y_cum'].max())
+    # df_nodes['y'] = df_nodes['y_cum'] / (df_nodes['volume_per_order'])
+    df_nodes['y'] = df_nodes['y_cum'] / (df_nodes['y_cum'].max())
 
     df_nodes = df_nodes.reset_index(drop=True).reset_index(
         drop=False).rename(columns={'index': 'i_node'})
