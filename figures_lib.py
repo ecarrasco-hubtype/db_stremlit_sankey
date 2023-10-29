@@ -63,7 +63,7 @@ def plotly_sankey(data, title="Sankey Diagram", ):
         node=dict(
             pad=5,
             thickness=30,
-            line=dict(color="white", width=1.5),
+            line=dict(color="white", width=3),
             label=df_nodes['node'].values,
             color=df_nodes['node'].map(
                 st.session_state['color_map']).to_list(),
@@ -91,4 +91,8 @@ def plotly_sankey(data, title="Sankey Diagram", ):
     if title != '':
         fig.update_layout(title_text=title, font_size=10)
 
+    fig.update_layout(
+        font_color="blue",
+        font_size=14,
+    )
     return fig
