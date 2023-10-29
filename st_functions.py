@@ -41,7 +41,7 @@ def init_st():
             '2023-09-12', '%Y-%m-%d')
 
         st.session_state['sankey_data'] = None
-        st.session_state['min_width'] = 1
+        st.session_state['min_width'] = 1100
         st.session_state['max_steps'] = None
         st.session_state['include_handoff'] = True
         st.session_state['include_no_handoff'] = True
@@ -53,8 +53,12 @@ def init_st():
         colors = px.colors.qualitative.Plotly * \
             (round(len(st.session_state['list_nodes']
                        )/len(px.colors.qualitative.Plotly)) + 2)
+
+        colors = ['#7964CC', '#736A99', '#6E4AFF',
+                  '#4D34B3', '#5F40DB', '#3B288A', '#2A1C61'] * 50
         st.session_state['color_map'] = dict(
             zip(st.session_state['list_nodes'], colors))
+        st.session_state['color_map']['HANDOFF'] = '#FF4AC6'
 
 
 def main_selector():
@@ -86,6 +90,8 @@ def main_selector():
     node_source = st_1.selectbox(
         'STARTING NODE', list_nodes, format_func=clean_node_names, index=None, help="Choose a node as starting point for every path")
 
+    filter_out_nodes = st_2.multiselect('FILTER OUT NODES', list_nodes,
+                                        format_func=clean_node_names, max_selections=99, help="Exclude nodes from the graph bypassing them")
     st_2.write('HANDOFF FILTERS')
     st_l, st_r = st_2.columns([1, 1])
 
@@ -93,9 +99,6 @@ def main_selector():
         'HANDOFF', value=True, help="Include sessions with handoff in the graph", disabled=bot_id is None)
     include_no_handoff = st_r.toggle(
         'NO HANDOFF', value=True, help="Exclude sessions with handoff from the graph", disabled=bot_id is None)
-
-    filter_out_nodes = st_2.multiselect('FILTER OUT NODES', list_nodes,
-                                        format_func=clean_node_names, max_selections=99, help="Exclude nodes from the graph bypassing them")
 
     start_date = st_3.date_input('FROM', value=today - dt.timedelta(days=30),
                                  min_value=st.session_state['min_date'], max_value=today, disabled=bot_id is None)
@@ -110,7 +113,7 @@ def main_selector():
                                   max_value=100, help="Select a maximum number of steps to show from the start")
 
     if not include_handoff and not include_no_handoff:
-        st_5.warning('Select at least one of the two options')
+        st_2.warning('Select at least one of the two options')
         return
 
     if bot_id is None:
@@ -171,7 +174,7 @@ def sk_section():
                 'displaylogo': False}
             )
         except Exception as e:
-            st_circle_logo_message(message=str(e))  # " NO DATA FOUND ")
+            st_circle_logo_message(message="NO DATA FOUND")
 
 
 # NOT USED:
