@@ -25,14 +25,17 @@ def pandas_from_sankey_data(data):
     df_nodes = df_nodes.sort_values(
         ['order', 'node_volume'], ascending=[True, False])
 
+    # k_space_nodes_percetange
+    k = 1 + 0.2
     df_nodes['y_cum'] = df_nodes['node_volume'] / 2 + \
         df_nodes.groupby('order').node_volume.transform(
-            lambda x: x.cumsum().shift(1).fillna(0))
+            lambda x: x.cumsum().shift(1).fillna(0)) * k
 
     df_nodes['volume_per_order'] = df_nodes.groupby(
         'order')['node_volume'].transform('sum')
 
-    df_nodes['y'] = df_nodes['y_cum'] / (df_nodes['volume_per_order'] * 1.00)
+    df_nodes['y'] = df_nodes['y_cum'] / (df_nodes['volume_per_order'])
+    # df_nodes['y'] = df_nodes['y_cum'] / (df_nodes['y_cum'].max())
 
     df_nodes = df_nodes.reset_index(drop=True).reset_index(
         drop=False).rename(columns={'index': 'i_node'})
@@ -60,7 +63,7 @@ def plotly_sankey(data, title="Sankey Diagram", ):
         node=dict(
             pad=5,
             thickness=30,
-            line=dict(color="white", width=0.8),
+            line=dict(color="white", width=1.5),
             label=df_nodes['node'].values,
             color=df_nodes['node'].map(
                 st.session_state['color_map']).to_list(),
