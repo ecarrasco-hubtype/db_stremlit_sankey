@@ -26,7 +26,7 @@ def pandas_from_sankey_data(data):
         ['order', 'node_volume'], ascending=[True, False])
 
     # k_space_nodes_percetange
-    k = 1 + 0.2
+    k = 2
     df_nodes['y_cum'] = df_nodes['node_volume'] / 2 + \
         df_nodes.groupby('order').node_volume.transform(
             lambda x: x.cumsum().shift(1).fillna(0)) * k
