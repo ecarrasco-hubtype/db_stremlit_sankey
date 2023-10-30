@@ -95,10 +95,10 @@ def main_selector():
     st_2.write('HANDOFF FILTERS')
     st_l, st_r = st_2.columns([1, 1])
 
-    include_handoff = st_l.toggle(
-        'HANDOFF', value=True, help="Include sessions with handoff in the graph", disabled=bot_id is None)
-    include_no_handoff = st_r.toggle(
-        'NO HANDOFF', value=True, help="Exclude sessions with handoff from the graph", disabled=bot_id is None)
+    include_handoff = st_l.checkbox(
+        'HANDOFF', value=False, help="Include sessions with handoff in the graph", disabled=bot_id is None)
+    include_no_handoff = st_r.checkbox(
+        'NO HANDOFF', value=False, help="Exclude sessions with handoff from the graph", disabled=bot_id is None)
 
     start_date = st_3.date_input('FROM', value=today - dt.timedelta(days=30),
                                  min_value=st.session_state['min_date'], max_value=today, disabled=bot_id is None)
@@ -111,10 +111,6 @@ def main_selector():
 
     max_steps = st_4.number_input('MAX. NUMBER STEPS', value=5, min_value=2,
                                   max_value=100, help="Select a maximum number of steps to show from the start")
-
-    if not include_handoff and not include_no_handoff:
-        st_2.warning('Select at least one of the two options')
-        return
 
     if bot_id is None:
         st_circle_logo_message()
@@ -174,7 +170,7 @@ def sk_section():
                 'displaylogo': False}
             )
         except Exception as e:
-            st_circle_logo_message(message="NO DATA FOUND")
+            st_circle_logo_message(message=str(e))  # "NO DATA FOUND")
 
 
 # NOT USED:

@@ -46,8 +46,8 @@ def pandas_from_sankey_data(data):
         'target_node', 'target_order'], right_on=['node', 'order'], suffixes=('', '_node'))['i_node'].fillna(-1).astype(int)
 
     df['color'] = df['session_with_handoff'].map(
-        {0: 'rgba(42, 28, 97, 0.8)', 1: 'rgba(110, 73, 255, 0.8)'})
-
+        {0: 'rgba(42, 28, 97, 0.8)', 1: 'rgba(110, 73, 255, 0.8)', 2: 'rgba(0, 0, 0, 0.2)'})
+    # handoff #FFBBCB ---> rgba(255, 187, 203, 0.5)
     return df, df_nodes
 
 
