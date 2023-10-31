@@ -3,6 +3,7 @@ from data_lib import get_bot_list_nodes, get_sankey_fig
 from figures_lib import plotly_sankey
 
 import streamlit as st
+import streamlit.components.v1 as components
 
 import plotly.express as px
 
@@ -11,6 +12,11 @@ from config import bot_id_name_dic
 
 
 today = dt.datetime.today()
+
+
+def streamlit_square_color(color, size=10):
+    html = f'<div style="background-color: {color}; width: {size}px; height: {size}px; border-radius: 50%; display: inline-block; margin-right: 5px;"></div>'
+    return components.html(html, height=size, width=size, scrolling=False)
 
 
 def clean_node_names(x):
@@ -46,6 +52,9 @@ def init_st():
         st.session_state['include_handoff'] = True
         st.session_state['include_no_handoff'] = True
         st.session_state['filter_out_nodes'] = None
+        st.session_state['session_default'] = True
+        st.session_state['number_time'] = 30
+        st.session_state['time_unit'] = 'DAYS'
         nodes_set = set()
         for _, nodes_bot_id in st.session_state['dict_bot_id_nodes'].items():
             nodes_set.update(nodes_bot_id)
@@ -66,8 +75,8 @@ def main_selector():
     st_ma.write('MULTIASISTENCIA')
     st_logo.image('./img/ht_logo.png', width=100)
 
-    st_1, st_2, st_3, st_4 = st.columns(
-        [3, 3, 1, 1])
+    st_1, st_3, _,  st_2, st_4 = st.columns(
+        [1, 1, 1, 2,  2])
 
     st.session_state['list_bots'] = list(st.session_state['dict_bot_id_nodes'].keys(
     )) + ['HANDOFF'] if st.session_state['dict_bot_id_nodes'].keys() is not None else None
@@ -88,29 +97,46 @@ def main_selector():
         list_nodes = []
 
     node_source = st_1.selectbox(
-        'STARTING NODE', list_nodes, format_func=clean_node_names, index=None, help="Choose a node as starting point for every path")
+        'STARTING NODE', list_nodes, format_func=clean_node_names, index=None)
 
-    filter_out_nodes = st_2.multiselect('FILTER OUT NODES', list_nodes,
-                                        format_func=clean_node_names, max_selections=99, help="Exclude nodes from the graph bypassing them")
-    st_2.write('HANDOFF FILTERS')
-    st_l, st_r = st_2.columns([1, 1])
+    # filter_out_nodes = st_2.multiselect('FILTER OUT NODES', list_nodes,
+    #                                     format_func=clean_node_names, max_selections=99, help="Exclude nodes from the graph bypassing them")
+    st_2.write('SESSION TIME')
+    st_default,  st_number, st_time = st_2.columns([2, 3, 2])
+    st_default.write(' ')
+    session_default = st_default.checkbox('DEFAULT', value=True)
+    number_time = st_number.number_input(
+        'NUMBER', value=30, min_value=1, max_value=10000, disabled=session_default)
+    time_unit = st_time.selectbox(
+        'UNIT', ['MINUTES', 'HOURS', 'DAYS'], index=2, disabled=session_default)
 
-    include_handoff = st_l.checkbox(
-        'HANDOFF', value=False, help="Include sessions with handoff in the graph", disabled=bot_id is None)
-    include_no_handoff = st_r.checkbox(
-        'NO HANDOFF', value=False, help="Exclude sessions with handoff from the graph", disabled=bot_id is None)
+    st_2.write('BREAK AND FILTER BY HANDOFF')
+    st_ch,  st_h, st_cn, st_n = st_2.columns([1, 10, 1, 10])
 
+    include_handoff = st_h.checkbox(
+        'HANDOFF', value=False, disabled=bot_id is None)
+
+    # color = 'rgba(255, 187, 203, 0.5)'
+    # html = f'<div style="background-color: {color}; width: {25}px; height: {25}px; border-radius: 0%; align-items: flex-start;"></div>'
+    # with st_ch:
+    #     components.html(html, height=25, width=25, scrolling=False)
+
+    include_no_handoff = st_n.checkbox(
+        'NO HANDOFF', value=False, disabled=bot_id is None)
+    # color = 'rgba(110, 73, 255, 0.8)'
+    # html = f'<div style="background-color: {color}; width: {25}px; height: {25}px; border-radius: 0%; align-items: flex-start;"></div>'
+    # with st_cn:
+    #     components.html(html, height=25, width=25, scrolling=False)
     start_date = st_3.date_input('FROM', value=today - dt.timedelta(days=30),
                                  min_value=st.session_state['min_date'], max_value=today, disabled=bot_id is None)
 
     end_date = st_3.date_input(
         'TO', value=today, min_value=st.session_state['min_date'], max_value=today, disabled=bot_id is None)
 
-    min_width = st_4.number_input('MIN. USERS PATH', value=3, min_value=1, max_value=10000,
-                                  help="Remove less frequent links selecting a minimum number of users between nodes to be shown")
-
+    min_width = st_4.number_input(
+        'MIN. USERS PATH', value=1, min_value=1, max_value=10000)
     max_steps = st_4.number_input('MAX. NUMBER STEPS', value=5, min_value=2,
-                                  max_value=100, help="Select a maximum number of steps to show from the start")
+                                  max_value=100)
 
     if bot_id is None:
         st_circle_logo_message()
@@ -124,9 +150,15 @@ def main_selector():
             max_steps != st.session_state['max_steps'] or \
             include_handoff != st.session_state['include_handoff'] or \
             include_no_handoff != st.session_state['include_no_handoff'] or \
-            filter_out_nodes != st.session_state['filter_out_nodes']:
+            session_default != st.session_state['session_default'] or \
+            number_time != st.session_state['number_time'] or \
+            time_unit != st.session_state['time_unit']:
+        # or \ filter_out_nodes != st.session_state['filter_out_nodes']:
 
-        st.session_state['filter_out_nodes'] = filter_out_nodes
+        # st.session_state['filter_out_nodes'] = filter_out_nodes
+        st.session_state['session_default'] = session_default
+        st.session_state['number_time'] = number_time
+        st.session_state['time_unit'] = time_unit
         st.session_state['include_handoff'] = include_handoff
         st.session_state['include_no_handoff'] = include_no_handoff
         st.session_state['bot_id'] = bot_id
@@ -140,6 +172,16 @@ def main_selector():
             '%Y-%m-%d')
         st.session_state['min_width'] = min_width
         st.session_state['max_steps'] = max_steps
+
+        if st.session_state['session_default'] is False:
+            if st.session_state['time_unit'] == 'MINUTES':
+                st.session_state['session_minutes'] = st.session_state['number_time']
+            elif st.session_state['time_unit'] == 'HOURS':
+                st.session_state['session_hours'] = st.session_state['number_time']
+            elif st.session_state['time_unit'] == 'DAYS':
+                st.session_state['session_days'] = st.session_state['number_time']
+        else:
+            st.session_state['session_days'] = 30
 
 
 def sk_section():
@@ -159,6 +201,12 @@ def sk_section():
                                                          include_handoff=st.session_state['include_handoff'],
                                                          include_no_handoff=st.session_state['include_no_handoff'],
                                                          filter_out_nodes=st.session_state['filter_out_nodes'],
+                                                         session_minutes=st.session_state.get(
+                                                             'session_minutes', None),
+                                                         session_hours=st.session_state.get(
+                                                             'session_hours', None),
+                                                         session_days=st.session_state.get(
+                                                             'session_days', None),
                                                          )
 
         try:

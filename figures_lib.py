@@ -46,7 +46,10 @@ def pandas_from_sankey_data(data):
         'target_node', 'target_order'], right_on=['node', 'order'], suffixes=('', '_node'))['i_node'].fillna(-1).astype(int)
 
     df['color'] = df['session_with_handoff'].map(
-        {0: 'rgba(42, 28, 97, 0.8)', 1: 'rgba(110, 73, 255, 0.8)', 2: 'rgba(0, 0, 0, 0.2)'})
+        {
+            0: 'rgba(110, 73, 255, 0.8)',  # 'rgba(42, 28, 97, 0.8)',
+            1: 'rgba(255, 187, 203, 0.5)',  # 'rgba(110, 73, 255, 0.8)',
+            2: 'rgba(0, 0, 0, 0.2)'})
     # handoff #FFBBCB ---> rgba(255, 187, 203, 0.5)
     return df, df_nodes
 
@@ -56,6 +59,28 @@ def plotly_sankey(data, title="Sankey Diagram", ):
     df, df_nodes = pandas_from_sankey_data(data)
     if df is None or df_nodes is None:
         return None
+    legend = []
+
+    if st.session_state['include_handoff'] or st.session_state['include_no_handoff']:
+        legend_entries = [
+            ['rgba(255, 187, 203, 0.5)', "HANDOFF"],
+            ['rgba(110, 73, 255, 0.8)', "NO HANDOFF"],
+        ]
+        # legend_entries = []
+    else:
+        legend_entries = [
+            ['rgba(0, 0, 0, 0.2)', "HANDOFF AND NO HANDOFF"],
+        ]
+    for entry in legend_entries:
+        legend.append(
+            go.Scatter(
+                mode="markers",
+                x=[None],
+                y=[None],
+                marker=dict(size=10, color=entry[0], symbol="square"),
+                name=entry[1],
+            )
+        )
 
     sankey = go.Sankey(
         # arrangement="perpendicular",
@@ -79,12 +104,15 @@ def plotly_sankey(data, title="Sankey Diagram", ):
             target=df['i_target'].values,
             value=df['transition_count'].values,
             color=df['color'].values,
-            line=dict(width=1.5, color='rgba(255, 255, 255, 0.7)'),
+            line=dict(width=1, color='rgba(255, 255, 255, 0.7)'),
             customdata=np.stack((df['session_with_handoff'].map(
-                {0: 'NO HANDOFF', 1: 'HANDOFF'}),  df['transition_count']), axis=-1),
+                {0: 'NO HANDOFF', 1: 'HANDOFF', 2: 'BOTH'}
+            ),  df['transition_count']), axis=-1),
             hovertemplate='<br>FROM: %{source.label}<br>TO: %{target.label}<br>TRAFFIC: <b>%{customdata[1]}<br><br>%{customdata[0]}</b><extra></extra>',
         ))
-    fig = go.Figure(data=[sankey])
+
+    traces = [sankey] + legend
+    fig = go.Figure(data=traces)
 
     fig.update_xaxes(visible=False)
     fig.update_yaxes(visible=False)
@@ -94,5 +122,13 @@ def plotly_sankey(data, title="Sankey Diagram", ):
     fig.update_layout(
         font_color="blue",
         font_size=14,
+        showlegend=True,
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.4,
+            xanchor="center",
+            x=0.5,
+        ),
     )
     return fig
