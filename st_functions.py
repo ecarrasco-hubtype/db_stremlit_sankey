@@ -25,13 +25,12 @@ def clean_node_names(x):
     return x.replace('_', ' ').capitalize().upper()
 
 
-def st_circle_logo_message(message='🤖 SELECT A BOT TO START 🚀'):
-    for _ in range(3):
-        st.header(' ')
-    _, st_logo, _ = st.columns([11, 4, 11])
+def st_circle_logo():
+    for _ in range(4):
+        st.write(' ')
+    _, st_logo, _ = st.columns([3, 1, 3])
     st_logo.image('./img/ht_circle.png',
-                  width=70, use_column_width=True)
-    st_logo.success(message)
+                  width=100, use_column_width=True)
 
 
 def init_st():
@@ -71,18 +70,13 @@ def init_st():
 
 
 def main_selector():
-
-    st_1, st_2 = st.columns([2, 3])
-    st_l, st_r = st_1.columns([1, 2])
-    st_l.write(' ')
-    st_l.write(' ')
-    st_l.image('./img/ht_logo.png', width=100)
-
-    st_r.title('Bot visualization')
+    st.image('./img/ht_logo.png', width=100)
+    st_1, st_2 = st.columns([2, 5])
+    st_1.title('Bot visualization')
 
     st_2.write(' ')
     st_2.write(' ')
-    st_2.write('Understand users navigate your bors')
+    st_2.write('Understand how users navigate your bors')
 
     st_1,  st_2, st_3, st_4 = st.columns(
         [1, 1, 1, 1])
@@ -141,7 +135,7 @@ def main_selector():
     #     'UNIT', ['MINUTES', 'HOURS', 'DAYS'], index=2, disabled=session_default)
 
     if bot_id is None:
-        st_circle_logo_message()
+        st_circle_logo()
         return
 
     if bot_id != st.session_state['bot_id'] or \
