@@ -126,9 +126,9 @@ def plotly_sankey(data, title="Sankey Diagram", ):
         legend=dict(
             orientation="h",
             yanchor="bottom",
-            y=1.4,
+            y=1.1,
             xanchor="center",
-            x=0.5,
+            x=0.85,
         ),
     )
     return fig
