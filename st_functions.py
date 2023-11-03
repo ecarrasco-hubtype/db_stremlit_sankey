@@ -10,6 +10,7 @@ import plotly.express as px
 import datetime as dt
 from config import bot_id_name_dic
 
+import pandas as pd
 
 today = dt.datetime.today()
 
@@ -46,7 +47,7 @@ def init_st():
             '2023-09-12', '%Y-%m-%d')
 
         st.session_state['sankey_data'] = None
-        st.session_state['min_width'] = 1100
+        st.session_state['min_width'] = 1
         st.session_state['max_steps'] = None
         st.session_state['include_handoff'] = True
         st.session_state['include_no_handoff'] = True
@@ -54,6 +55,7 @@ def init_st():
         st.session_state['session_default'] = True
         st.session_state['number_time'] = 30
         st.session_state['time_unit'] = 'DAYS'
+        st.session_state['auto_width'] = True
         nodes_set = set()
         for _, nodes_bot_id in st.session_state['dict_bot_id_nodes'].items():
             nodes_set.update(nodes_bot_id)
@@ -112,8 +114,34 @@ def main_selector():
         [1, 1, 1, 1])
     node_source = st_1.selectbox(
         'Starting node', list_nodes, format_func=clean_node_names, index=None)
-    min_width = st_2.number_input(
-        'Minimum nº of users in a path”', value=1, min_value=1, max_value=10000, disabled=bot_id is None, help='Minimum number of users going through the same path. Increasing this helps you focus on paths that are more common')
+    st_l, st_r = st_2.columns([7, 2])
+
+    st_r.write(' ')
+    st_r.write(' ')
+    if st_r.button('Auto',  disabled=bot_id is None, help='Automatically set the minimum width'):
+        data = get_sankey_fig(bot_id=st.session_state['bot_id'],
+                              start_date=st.session_state['start_date'],
+                              end_date=st.session_state['end_date'],
+                              node_source=st.session_state['node_source'],
+                              max_steps=st.session_state['max_steps'],
+                              min_width=1,
+                              include_handoff=st.session_state['include_handoff'],
+                              include_no_handoff=st.session_state['include_no_handoff'],
+                              filter_out_nodes=st.session_state['filter_out_nodes'],
+                              session_minutes=st.session_state.get(
+            'session_minutes', None),
+            session_hours=st.session_state.get(
+            'session_hours', None),
+            session_days=st.session_state.get(
+            'session_days', None),
+        )
+        df = pd.DataFrame(data)
+        min_width_auto = df.transition_count.quantile(0.9)
+        st.session_state['min_width'] = round(min_width_auto)
+
+    min_width = st_l.number_input(
+        'Minimum nº of users in a path', value=st.session_state['min_width'], min_value=1,  disabled=(bot_id is None), help='Minimum number of users going through the same path. Increasing this helps you focus on paths that are more common')
+
     max_steps = st_3.number_input(
         'Maximum nº steps', value=5, min_value=2, max_value=100, disabled=bot_id is None, help='Maximum path length (in number of steps) that you want to show')
 
@@ -163,6 +191,7 @@ def main_selector():
         # st.session_state['session_default'] = session_default
         # st.session_state['number_time'] = number_time
         # st.session_state['time_unit'] = time_unit
+
         st.session_state['include_handoff'] = include_handoff
         st.session_state['include_no_handoff'] = include_no_handoff
         st.session_state['bot_id'] = bot_id
