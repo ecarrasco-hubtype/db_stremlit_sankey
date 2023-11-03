@@ -136,7 +136,7 @@ def main_selector():
             'session_days', None),
         )
         df = pd.DataFrame(data)
-        min_width_auto = df.transition_count.max() * 0.075
+        min_width_auto = df.transition_count.quantile(0.95)
         st.session_state['min_width'] = round(min_width_auto)
 
     min_width = st_l.number_input(
