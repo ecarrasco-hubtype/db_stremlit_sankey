@@ -71,40 +71,43 @@ def plotly_sankey(data):
     legends_data = []
     if not st.session_state['include_handoff'] and not st.session_state['include_no_handoff']:
         legends_data += [
-            ('rgba(0, 0, 0, 0.2)', "all paths", 'legend1')
+            ('rgba(0, 0, 0, 0.2)', "all", 'Paths', 'arrow-right'),
         ]
 
     else:
         if st.session_state['include_handoff']:
             legends_data += (
-                'rgba(110, 73, 255, 0.8)', "with handoff", 'legend1'
+                'rgba(110, 73, 255, 0.8)', "with handoff", 'Paths', 'arrow-right'
             ),
 
         if st.session_state['include_no_handoff']:
             legends_data += (
-                'rgba(255, 187, 203, 0.5)', "no handoff", 'legend1'
+                'rgba(255, 187, 203, 0.5)', "without handoff", 'Paths', 'arrow-right'
             ),
 
     if st.session_state['node_source'] is not None and st.session_state['node_source'] != 'HANDOFF':
         legends_data += [
-            ('rgba(87,85,96,1)', "First node", "legend2"),
+            ('rgba(87,85,96,1)', "Starting", "Nodes", 'square'),
         ]
 
     legends_data += [
-        ('rgba(110,73,255,1)', "Handoff node", "legend2"),
+        ('rgba(110,73,255,1)', "Handoff", "Nodes", 'square'),
+        ('rgba(167, 165, 173, 1)', "Regular ", "Nodes", 'square'),
+
     ]
 
     # Markers legend
     legends = []
-    for color, name, legend in legends_data:
+    for color, name, legend_group, symbol in legends_data:
         legends.append(
             go.Scatter(
                 mode="markers",
                 x=[None],
                 y=[None],
-                marker=dict(size=10, color=color, symbol="square"),
+                marker=dict(color=color, symbol=symbol, size=15),
                 name=name,
-                legend=legend,
+                legendgrouptitle=dict(text=legend_group),
+                legendgroup=legend_group,
             )
         )
 
@@ -139,34 +142,23 @@ def plotly_sankey(data):
     ]
 
     traces = sankey + legends
+    layout = go.Layout(
+        dict(
+            showlegend=True,
+            legend=dict(
+                orientation="v",
+                y=0.95,
+                x=1,
+            ),
+
+            hoverlabel=dict(
+                font=dict(color='rgba(87,85,96,1)'),
+            )
+        )
+    )
+
     fig = go.Figure(data=traces,
-                    layout=dict(
-                        # showlegend=True,
-                        legend=dict(
-                            orientation="h",
-                            yanchor="bottom",
-                            y=1.1,
-                            xanchor="center",
-                            x=0.1),
-
-                        legend1=dict(
-                            orientation="h",
-                            yanchor="bottom",
-                            y=1.1,
-                            xanchor="center",
-                            x=0.85),
-
-                        legend2=dict(
-                            orientation="h",
-                            yanchor="bottom",
-                            y=1.1,
-                            xanchor="center",
-                            x=0.5),
-
-                        hoverlabel=dict(
-                            font=dict(color='rgba(87,85,96,1)'),
-                        )
-                    )
+                    layout=layout
                     )
 
     fig.update_xaxes(visible=False)

@@ -69,7 +69,7 @@ def init_st():
 
 def main_selector():
     st.image('./img/ht_logo.png', width=100)
-    st_1, st_2 = st.columns([2, 10])
+    st_1, st_2 = st.columns([1, 3])
     st_1.header('Bot visualization')
     st_2.write('')
     st_2.write('')
