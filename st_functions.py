@@ -64,42 +64,16 @@ def init_st():
         st.session_state['color_map'] = dict(
             zip(st.session_state['list_nodes'], colors))
         st.session_state['color_map']['HANDOFF'] = 'rgba(110,73,255,1)'
-        st.session_state['firts_order_node_color'] = 'rgba(87,85,96,1)'
+        st.session_state['node_source_color'] = 'rgba(87,85,96,1)'
 
 
 def main_selector():
     st.image('./img/ht_logo.png', width=100)
-    st_1, st_2 = st.columns([2, 2])
-    # st_1.title('Bot visualization')
-    html_title = """
-    <style>
-    table, td, th {
-    border: 1px solid black;
-    }
-    table {
-    border-collapse: collapse;
-    }
-    th {
-    text-align: left;
-    vertical-align: bottom;
-    text-align: left;
-    }
-    td {
-    font-size: 18px;
-    }
-    tr {
-    height: 18px;
-    }
-    </style>
-    <table>
-    <tr>
-        <td><h1 style="font-size:30px;">Bot visualisation</h1></td>
-        <td><h3 style="font-size:16px;">Understand how users navigate your bot</h3></td>
-    </tr>
-    </table>
-    """
-    st_1.markdown(html_title, unsafe_allow_html=True)
-
+    st_1, st_2 = st.columns([2, 10])
+    st_1.header('Bot visualization')
+    st_2.write('')
+    st_2.write('')
+    st_2.write('Understand how users navigate your bot')
     html_bot_setting = """
     <h2 style="font-size:18px;">Bot settings</h2>
     """
@@ -113,7 +87,7 @@ def main_selector():
     bot_list = [b for b in st.session_state['list_bots']
                 if b in bot_id_name_dic.keys()]
     bot_id = st_1.selectbox(
-        'BOT', bot_list, index=None, format_func=lambda x: bot_id_name_dic.get(x, x))
+        'Bot', bot_list, index=None, format_func=lambda x: bot_id_name_dic.get(x, x))
 
     st.session_state['list_nodes'] = sorted(st.session_state['dict_bot_id_nodes'].get(
         bot_id, []))
@@ -124,11 +98,11 @@ def main_selector():
     else:
         list_nodes = []
 
-    start_date = st_2.date_input('FROM', value=today - dt.timedelta(days=30),
+    start_date = st_2.date_input('From', value=today - dt.timedelta(days=30),
                                  min_value=st.session_state['min_date'], max_value=today, disabled=bot_id is None)
 
     end_date = st_3.date_input(
-        'TO', value=today, min_value=st.session_state['min_date'], max_value=today, disabled=bot_id is None)
+        'to', value=today, min_value=st.session_state['min_date'], max_value=today, disabled=bot_id is None)
 
     html_bot_viz_pref = """
     <h2 style="font-size:18px;">Visualization preferences</h2>
@@ -137,20 +111,20 @@ def main_selector():
     st_1,  st_2, st_3, st_4 = st.columns(
         [1, 1, 1, 1])
     node_source = st_1.selectbox(
-        'STARTING NODE', list_nodes, format_func=clean_node_names, index=None)
+        'Starting node', list_nodes, format_func=clean_node_names, index=None)
     min_width = st_2.number_input(
-        'MIN. USERS PATH', value=1, min_value=1, max_value=10000, disabled=bot_id is None, help='Minimum number of users going through the same path. Increasing this helps you focus on paths that are more common')
+        'Minimum nº of users in a path”', value=1, min_value=1, max_value=10000, disabled=bot_id is None, help='Minimum number of users going through the same path. Increasing this helps you focus on paths that are more common')
     max_steps = st_3.number_input(
-        'MAX. NUMBER STEPS', value=5, min_value=2, max_value=100, disabled=bot_id is None, help='Maximum path length (in number of steps) that you want to show')
+        'Maximum nº steps', value=5, min_value=2, max_value=100, disabled=bot_id is None, help='Maximum path length (in number of steps) that you want to show')
 
     st_4.write('Filter paths by')
     st_h, st_n = st_4.columns([1, 1])
 
     include_handoff = st_h.checkbox(
-        'HANDOFF', value=False, disabled=bot_id is None, help='This helps you filter out paths that ended  without hand off')
+        'with handoff', value=False, disabled=bot_id is None, help='This helps you filter out paths that ended  without hand off')
 
     include_no_handoff = st_n.checkbox(
-        'NO HANDOFF', value=False, disabled=bot_id is None, help='This helps you filter out paths that ended with a handoff')
+        'no handoff', value=False, disabled=bot_id is None, help='This helps you filter out paths that ended with a handoff')
 
     html_sesion_time = """
     <p>The length of a session defined by your organisation is: <b>30 days</b></p>
@@ -240,17 +214,16 @@ def sk_section():
                                                          )
 
         try:
-            st.plotly_chart(plotly_sankey(st.session_state['sankey_data'],
-                                          title='',
-                                          ),
+            st.plotly_chart(plotly_sankey(st.session_state['sankey_data']),
                             use_container_width=True,
                             config={
                 'displaylogo': False}
             )
-        except Exception:
+        except Exception as e:
             st_circle_logo()
             _, st_1, _ = st.columns([6, 2, 6])
             st_1.warning('No data available')
+            st.write(str(e))
 
 
 # NOT USED:

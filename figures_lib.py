@@ -53,40 +53,62 @@ def pandas_from_sankey_data(data):
     return df, df_nodes
 
 
-def plotly_sankey(data, title="Sankey Diagram", ):
+def plotly_sankey(data):
 
     df, df_nodes = pandas_from_sankey_data(data)
     if df is None or df_nodes is None:
         return None
+
+    # Nodes colore
     df_nodes['node_color'] = df_nodes['node'].map(
         st.session_state['color_map'])
-    df_nodes.loc[df_nodes['order'] == 1,
-                 'node_color'] = st.session_state['firts_order_node_color']
 
-    legend_entries = []
+    if st.session_state['node_source'] is not None and st.session_state['node_source'] != 'HANDOFF':
+        df_nodes.loc[(df_nodes['node'] == st.session_state['node_source']) & (df_nodes['order'] == 1),
+                     'node_color'] = st.session_state['node_source_color']
+
+    # Legends data
+    legends_data = []
     if not st.session_state['include_handoff'] and not st.session_state['include_no_handoff']:
-        legend_entries = [
-            ['rgba(0, 0, 0, 0.2)', "HANDOFF AND NO HANDOFF"],
+        legends_data += [
+            ('rgba(0, 0, 0, 0.2)', "all paths", 'legend1')
         ]
+
     else:
         if st.session_state['include_handoff']:
-            legend_entries += ['rgba(255, 187, 203, 0.5)', "HANDOFF"],
-        if st.session_state['include_no_handoff']:
-            legend_entries += ['rgba(110, 73, 255, 0.8)', "NO HANDOFF"],
+            legends_data += (
+                'rgba(110, 73, 255, 0.8)', "with handoff", 'legend1'
+            ),
 
-    legend_handoff = []
-    for entry in legend_entries:
-        legend_handoff.append(
+        if st.session_state['include_no_handoff']:
+            legends_data += (
+                'rgba(255, 187, 203, 0.5)', "no handoff", 'legend1'
+            ),
+
+    if st.session_state['node_source'] is not None and st.session_state['node_source'] != 'HANDOFF':
+        legends_data += [
+            ('rgba(87,85,96,1)', "First node", "legend2"),
+        ]
+
+    legends_data += [
+        ('rgba(110,73,255,1)', "Handoff node", "legend2"),
+    ]
+
+    # Markers legend
+    legends = []
+    for color, name, legend in legends_data:
+        legends.append(
             go.Scatter(
                 mode="markers",
                 x=[None],
                 y=[None],
-                marker=dict(size=10, color=entry[0], symbol="square"),
-                name=entry[1],
+                marker=dict(size=10, color=color, symbol="square"),
+                name=name,
+                legend=legend,
             )
         )
 
-    sankey = go.Sankey(
+    sankey = [go.Sankey(
         # arrangement="perpendicular",
         # arrangement="snap",
         node=dict(
@@ -97,9 +119,10 @@ def plotly_sankey(data, title="Sankey Diagram", ):
             color=df_nodes['node_color'].values,
             x=df_nodes['x'].values,
             y=df_nodes['y'].values,
-            customdata=np.stack((df_nodes['order'], df_nodes['node_volume'],
-                                 df_nodes['x'], df_nodes['y']), axis=-1),
-            hovertemplate='TRAFFIC: <b>%{customdata[1]}</b><br>ORDER: %{customdata[0]}<br>X: %{customdata[2]:.2f},<br>Y: %{customdata[3]:.2f}<extra></extra>',
+            customdata=np.stack(
+                (df_nodes['order'], df_nodes['node_volume']), axis=-1),
+            hovertemplate='TRAFFIC: <b>%{customdata[1]}</b><br>ORDER: %{customdata[0]}<extra></extra>',
+
         ),
         link=dict(
             arrowlen=30,
@@ -109,31 +132,43 @@ def plotly_sankey(data, title="Sankey Diagram", ):
             color=df['color'].values,
             line=dict(width=1, color='rgba(255, 255, 255, 0.7)'),
             customdata=np.stack((df['session_with_handoff'].map(
-                {0: 'NO HANDOFF', 1: 'HANDOFF', 2: 'BOTH'}
+                {0: 'no handoff', 1: 'handoff', 2: 'all paths'}
             ),  df['transition_count']), axis=-1),
-            hovertemplate='<br>FROM: %{source.label}<br>TO: %{target.label}<br>TRAFFIC: <b>%{customdata[1]}<br><br>%{customdata[0]}</b><extra></extra>',
+            hovertemplate='<br><b>FROM</b>: %{source.label}<br><b>TO</b>: %{target.label}<br><br>TRAFFIC: <b>%{customdata[1]}</b><b><extra>%{customdata[0]}</b></extra>',
         ))
+    ]
 
-    traces = [sankey] + legend_handoff
-    fig = go.Figure(data=traces)
+    traces = sankey + legends
+    fig = go.Figure(data=traces,
+                    layout=dict(
+                        # showlegend=True,
+                        legend=dict(
+                            orientation="h",
+                            yanchor="bottom",
+                            y=1.1,
+                            xanchor="center",
+                            x=0.1),
+
+                        legend1=dict(
+                            orientation="h",
+                            yanchor="bottom",
+                            y=1.1,
+                            xanchor="center",
+                            x=0.85),
+
+                        legend2=dict(
+                            orientation="h",
+                            yanchor="bottom",
+                            y=1.1,
+                            xanchor="center",
+                            x=0.5),
+
+                        hoverlabel=dict(
+                            font=dict(color='rgba(87,85,96,1)'),
+                        )
+                    )
+                    )
 
     fig.update_xaxes(visible=False)
     fig.update_yaxes(visible=False)
-    if title != '':
-        fig.update_layout(title_text=title, font_size=10)
-
-    fig.update_layout(
-        font_color="blue",
-        font_size=14,
-        showlegend=True,
-        legend=dict(
-            orientation="h",
-            yanchor="bottom",
-            y=1.1,
-            xanchor="center",
-            x=0.85),
-        hoverlabel=dict(
-            font=dict(color='rgba(87,85,96,1)'),
-        )
-    )
     return fig
