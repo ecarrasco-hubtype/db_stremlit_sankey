@@ -76,7 +76,7 @@ def main_selector():
 
     st_2.write(' ')
     st_2.write(' ')
-    st_2.write('Understand how users navigate your bors')
+    st_2.write('Understand how users navigate your bots')
 
     st_1,  st_2, st_3, st_4 = st.columns(
         [1, 1, 1, 1])
@@ -110,9 +110,9 @@ def main_selector():
     node_source = st_1.selectbox(
         'STARTING NODE', list_nodes, format_func=clean_node_names, index=None)
     min_width = st_2.number_input(
-        'MIN. USERS PATH', value=1, min_value=1, max_value=10000, disabled=bot_id is None)
+        'MIN. USERS PATH', value=1, min_value=1, max_value=10000, disabled=bot_id is None, help='Minimum number of users going through the same path. Increasing this helps you focus on paths that are more common')
     max_steps = st_3.number_input(
-        'MAX. NUMBER STEPS', value=5, min_value=2, max_value=100, disabled=bot_id is None)
+        'MAX. NUMBER STEPS', value=5, min_value=2, max_value=100, disabled=bot_id is None, help='Maximum path length (in number of steps) that you want to show')
 
     st_4.write('Filter paths by')
     st_h, st_n = st_4.columns([1, 1])
@@ -121,7 +121,7 @@ def main_selector():
         'HANDOFF', value=False, disabled=bot_id is None)
 
     include_no_handoff = st_n.checkbox(
-        'NO HANDOFF', value=False, disabled=bot_id is None)
+        'NO HANDOFF', value=False, disabled=bot_id is None, help='This helps you filter out paths that ended with a handoff, or without, and compare them')
     # Filter out nodes tool
     # filter_out_nodes = st_2.multiselect('FILTER OUT NODES', list_nodes,
     #                                     format_func=clean_node_names, max_selections=99, help="Exclude nodes from the graph bypassing them")

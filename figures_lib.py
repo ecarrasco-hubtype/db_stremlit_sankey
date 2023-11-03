@@ -59,18 +59,19 @@ def plotly_sankey(data, title="Sankey Diagram", ):
     df, df_nodes = pandas_from_sankey_data(data)
     if df is None or df_nodes is None:
         return None
-    legend = []
 
-    if st.session_state['include_handoff'] or st.session_state['include_no_handoff']:
-        legend_entries = [
-            ['rgba(255, 187, 203, 0.5)', "HANDOFF"],
-            ['rgba(110, 73, 255, 0.8)', "NO HANDOFF"],
-        ]
-        # legend_entries = []
-    else:
+    legend_entries = []
+    if not st.session_state['include_handoff'] and not st.session_state['include_no_handoff']:
         legend_entries = [
             ['rgba(0, 0, 0, 0.2)', "HANDOFF AND NO HANDOFF"],
         ]
+    else:
+        if st.session_state['include_handoff']:
+            legend_entries += ['rgba(255, 187, 203, 0.5)', "HANDOFF"],
+        if st.session_state['include_no_handoff']:
+            legend_entries += ['rgba(110, 73, 255, 0.8)', "NO HANDOFF"],
+
+    legend = []
     for entry in legend_entries:
         legend.append(
             go.Scatter(
