@@ -47,10 +47,9 @@ def pandas_from_sankey_data(data):
 
     df['color'] = df['session_with_handoff'].map(
         {
-            0: 'rgba(110, 73, 255, 0.8)',  # 'rgba(42, 28, 97, 0.8)',
-            1: 'rgba(255, 187, 203, 0.5)',  # 'rgba(110, 73, 255, 0.8)',
-            2: 'rgba(0, 0, 0, 0.2)'})
-    # handoff #FFBBCB ---> rgba(255, 187, 203, 0.5)
+            0: 'rgba(204, 53, 89, 0.2)',
+            1: 'rgba(110, 73, 255, 0.2)',
+            2: 'rgba(167, 165, 173, 0.2)'})
     return df, df_nodes
 
 
@@ -59,6 +58,10 @@ def plotly_sankey(data, title="Sankey Diagram", ):
     df, df_nodes = pandas_from_sankey_data(data)
     if df is None or df_nodes is None:
         return None
+    df_nodes['node_color'] = df_nodes['node'].map(
+        st.session_state['color_map'])
+    df_nodes.loc[df_nodes['order'] == 1,
+                 'node_color'] = st.session_state['firts_order_node_color']
 
     legend_entries = []
     if not st.session_state['include_handoff'] and not st.session_state['include_no_handoff']:
@@ -71,9 +74,9 @@ def plotly_sankey(data, title="Sankey Diagram", ):
         if st.session_state['include_no_handoff']:
             legend_entries += ['rgba(110, 73, 255, 0.8)', "NO HANDOFF"],
 
-    legend = []
+    legend_handoff = []
     for entry in legend_entries:
-        legend.append(
+        legend_handoff.append(
             go.Scatter(
                 mode="markers",
                 x=[None],
@@ -91,8 +94,7 @@ def plotly_sankey(data, title="Sankey Diagram", ):
             thickness=30,
             line=dict(color="white", width=3),
             label=df_nodes['node'].values,
-            color=df_nodes['node'].map(
-                st.session_state['color_map']).to_list(),
+            color=df_nodes['node_color'].values,
             x=df_nodes['x'].values,
             y=df_nodes['y'].values,
             customdata=np.stack((df_nodes['order'], df_nodes['node_volume'],
@@ -112,7 +114,7 @@ def plotly_sankey(data, title="Sankey Diagram", ):
             hovertemplate='<br>FROM: %{source.label}<br>TO: %{target.label}<br>TRAFFIC: <b>%{customdata[1]}<br><br>%{customdata[0]}</b><extra></extra>',
         ))
 
-    traces = [sankey] + legend
+    traces = [sankey] + legend_handoff
     fig = go.Figure(data=traces)
 
     fig.update_xaxes(visible=False)
@@ -129,7 +131,9 @@ def plotly_sankey(data, title="Sankey Diagram", ):
             yanchor="bottom",
             y=1.1,
             xanchor="center",
-            x=0.85,
-        ),
+            x=0.85),
+        hoverlabel=dict(
+            font=dict(color='rgba(87,85,96,1)'),
+        )
     )
     return fig

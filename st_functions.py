@@ -58,26 +58,52 @@ def init_st():
         for _, nodes_bot_id in st.session_state['dict_bot_id_nodes'].items():
             nodes_set.update(nodes_bot_id)
         st.session_state['list_nodes'] = sorted(list(nodes_set) + ['HANDOFF'])
-        colors = px.colors.qualitative.Plotly * \
-            (round(len(st.session_state['list_nodes']
-                       )/len(px.colors.qualitative.Plotly)) + 2)
 
-        colors = ['#7964CC', '#736A99', '#6E4AFF',
-                  '#4D34B3', '#5F40DB', '#3B288A', '#2A1C61'] * 50
+        colors = ['rgba(167, 165, 173, 1)'] * \
+            len(st.session_state['list_nodes'])
         st.session_state['color_map'] = dict(
             zip(st.session_state['list_nodes'], colors))
-        st.session_state['color_map']['HANDOFF'] = '#FF4AC6'
+        st.session_state['color_map']['HANDOFF'] = 'rgba(110,73,255,1)'
+        st.session_state['firts_order_node_color'] = 'rgba(87,85,96,1)'
 
 
 def main_selector():
     st.image('./img/ht_logo.png', width=100)
-    st_1, st_2 = st.columns([2, 5])
-    st_1.title('Bot visualization')
+    st_1, st_2 = st.columns([2, 2])
+    # st_1.title('Bot visualization')
+    html_title = """
+    <style>
+    table, td, th {
+    border: 1px solid black;
+    }
+    table {
+    border-collapse: collapse;
+    }
+    th {
+    text-align: left;
+    vertical-align: bottom;
+    text-align: left;
+    }
+    td {
+    font-size: 18px;
+    }
+    tr {
+    height: 18px;
+    }
+    </style>
+    <table>
+    <tr>
+        <td><h1 style="font-size:30px;">Bot visualisation</h1></td>
+        <td><h3 style="font-size:16px;">Understand how users navigate your bot</h3></td>
+    </tr>
+    </table>
+    """
+    st_1.markdown(html_title, unsafe_allow_html=True)
 
-    st_2.write(' ')
-    st_2.write(' ')
-    st_2.write('Understand how users navigate your bots')
-
+    html_bot_setting = """
+    <h2 style="font-size:18px;">Bot settings</h2>
+    """
+    st.markdown(html_bot_setting, unsafe_allow_html=True)
     st_1,  st_2, st_3, st_4 = st.columns(
         [1, 1, 1, 1])
 
@@ -104,7 +130,10 @@ def main_selector():
     end_date = st_3.date_input(
         'TO', value=today, min_value=st.session_state['min_date'], max_value=today, disabled=bot_id is None)
 
-    st.write('Visualization preferences')
+    html_bot_viz_pref = """
+    <h2 style="font-size:18px;">Visualization preferences</h2>
+    """
+    st.markdown(html_bot_viz_pref, unsafe_allow_html=True)
     st_1,  st_2, st_3, st_4 = st.columns(
         [1, 1, 1, 1])
     node_source = st_1.selectbox(
@@ -118,10 +147,15 @@ def main_selector():
     st_h, st_n = st_4.columns([1, 1])
 
     include_handoff = st_h.checkbox(
-        'HANDOFF', value=False, disabled=bot_id is None)
+        'HANDOFF', value=False, disabled=bot_id is None, help='This helps you filter out paths that ended  without hand off')
 
     include_no_handoff = st_n.checkbox(
-        'NO HANDOFF', value=False, disabled=bot_id is None, help='This helps you filter out paths that ended with a handoff, or without, and compare them')
+        'NO HANDOFF', value=False, disabled=bot_id is None, help='This helps you filter out paths that ended with a handoff')
+
+    html_sesion_time = """
+    <p>The length of a session defined by your organisation is: <b>30 days</b></p>
+    """
+    st.markdown(html_sesion_time, unsafe_allow_html=True)
     # Filter out nodes tool
     # filter_out_nodes = st_2.multiselect('FILTER OUT NODES', list_nodes,
     #                                     format_func=clean_node_names, max_selections=99, help="Exclude nodes from the graph bypassing them")
@@ -213,8 +247,10 @@ def sk_section():
                             config={
                 'displaylogo': False}
             )
-        except Exception as e:
-            st_circle_logo_message(message=str(e))  # "NO DATA FOUND")
+        except Exception:
+            st_circle_logo()
+            _, st_1, _ = st.columns([6, 2, 6])
+            st_1.warning('No data available')
 
 
 # NOT USED:
