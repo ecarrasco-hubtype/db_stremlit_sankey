@@ -238,11 +238,19 @@ def sk_section():
                                                          )
 
         try:
-            st.plotly_chart(plotly_sankey(st.session_state['sankey_data']),
+            fig_main, fig_nodes = plotly_sankey(
+                st.session_state['sankey_data'])
+            st.plotly_chart(fig_nodes,
+                            config={
+                                'staticPlot':  True,
+                            }
+                            )
+            st.plotly_chart(fig_main,
                             use_container_width=True,
                             config={
-                'displaylogo': False}
-            )
+                                'displaylogo': False,
+                            }
+                            )
         except Exception as e:
             st_circle_logo()
             _, st_1, _ = st.columns([6, 2, 6])

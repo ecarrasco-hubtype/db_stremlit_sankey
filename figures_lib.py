@@ -68,46 +68,56 @@ def plotly_sankey(data):
                      'node_color'] = st.session_state['node_source_color']
 
     # Legends data
-    legends_data = []
+    legends_paths = []
     if not st.session_state['include_handoff'] and not st.session_state['include_no_handoff']:
-        legends_data += [
+        legends_paths += [
             ('rgba(165, 165, 173, 0.2)', "all", 'Paths', 'arrow-right'),
         ]
 
     else:
         if st.session_state['include_handoff']:
-            legends_data += (
+            legends_paths += (
                 'rgba(204, 53, 89, 0.2)', "with handoff", 'Paths', 'arrow-right'
             ),
 
         if st.session_state['include_no_handoff']:
-            legends_data += (
+            legends_paths += (
                 'rgba(110, 73, 255, 0.2)', "without handoff", 'Paths', 'arrow-right'
             ),
 
-    if st.session_state['node_source'] is not None and st.session_state['node_source'] != 'HANDOFF':
-        legends_data += [
-            ('rgba(87,85,96,1)', "Starting", "Nodes", 'square'),
-        ]
-
-    legends_data += [
+    legends_nodes = [
         ('rgba(204,53,89,1)', "Handoff", "Nodes", 'square'),
         ('rgba(167, 165, 173, 1)', "Regular ", "Nodes", 'square'),
 
     ]
+    if st.session_state['node_source'] is not None and st.session_state['node_source'] != 'HANDOFF':
+        legends_nodes += [
+            ('rgba(87,85,96,1)', "Starting", "Nodes", 'square'),
+        ]
 
     # Markers legend
-    legends = []
-    for color, name, legend_group, symbol in legends_data:
-        legends.append(
+    traces_paths = []
+    for color, name, legend_group, symbol in legends_paths:
+        traces_paths.append(
+            go.Scatter(
+                mode="markers",
+                x=[None],
+                y=[None],
+                marker=dict(color=color, symbol=symbol, size=20),
+                name=name,
+                legendgrouptitle=dict(text=legend_group),
+                legendgroup=legend_group,
+            )
+        )
+    traces_nodes = []
+    for color, name, legend_group, symbol in legends_nodes:
+        traces_nodes.append(
             go.Scatter(
                 mode="markers",
                 x=[None],
                 y=[None],
                 marker=dict(color=color, symbol=symbol, size=15),
                 name=name,
-                legendgrouptitle=dict(text=legend_group),
-                legendgroup=legend_group,
             )
         )
 
@@ -141,14 +151,38 @@ def plotly_sankey(data):
         ))
     ]
 
-    traces = sankey + legends
-    layout = go.Layout(
+    traces_main = sankey + traces_paths
+    layout_oaths = go.Layout(
         dict(
             showlegend=True,
             legend=dict(
                 orientation="v",
-                y=0.95,
-                x=1,
+                y=1.3,
+                x=0.95,
+            ),
+
+            hoverlabel=dict(
+                font=dict(color='rgba(39,38,43,1)'),
+            ),
+            margin=dict(l=0, r=0, t=0, b=0),
+        )
+    )
+
+    fig_main = go.Figure(data=traces_main,
+                         layout=layout_oaths
+
+                         )
+
+    fig_main.update_xaxes(visible=False)
+    fig_main.update_yaxes(visible=False)
+
+    layout_nodes = go.Layout(
+        dict(
+            showlegend=True,
+            legend=dict(
+                orientation="h",
+                y=1.3,
+                x=0.02,
             ),
 
             hoverlabel=dict(
@@ -156,11 +190,13 @@ def plotly_sankey(data):
             )
         )
     )
+    fig_nodes = go.Figure(data=traces_nodes,
+                          layout=layout_nodes
+                          )
 
-    fig = go.Figure(data=traces,
-                    layout=layout
-                    )
-
-    fig.update_xaxes(visible=False)
-    fig.update_yaxes(visible=False)
-    return fig
+    fig_nodes.update_xaxes(visible=False)
+    fig_nodes.update_yaxes(visible=False)
+    fig_nodes.update_layout(
+        height=50,  # Alto en píxeles
+    )
+    return fig_main, fig_nodes
