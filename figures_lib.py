@@ -47,8 +47,8 @@ def pandas_from_sankey_data(data):
 
     df['color'] = df['session_with_handoff'].map(
         {
-            0: 'rgba(204, 53, 89, 0.2)',
-            1: 'rgba(110, 73, 255, 0.2)',
+            0: 'rgba(110, 73, 255, 0.2)',
+            1: 'rgba(204, 53, 89, 0.2)',
             2: 'rgba(167, 165, 173, 0.2)'})
     return df, df_nodes
 
