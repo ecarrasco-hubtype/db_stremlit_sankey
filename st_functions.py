@@ -5,12 +5,12 @@ from figures_lib import plotly_sankey
 import streamlit as st
 import streamlit.components.v1 as components
 
-import plotly.express as px
 
 import datetime as dt
 from config import bot_id_name_dic
 
 import pandas as pd
+import numpy as np
 
 today = dt.datetime.today()
 
@@ -56,6 +56,7 @@ def init_st():
         st.session_state['number_time'] = 30
         st.session_state['time_unit'] = 'DAYS'
         st.session_state['auto_width'] = True
+
         nodes_set = set()
         for _, nodes_bot_id in st.session_state['dict_bot_id_nodes'].items():
             nodes_set.update(nodes_bot_id)
@@ -69,7 +70,41 @@ def init_st():
         st.session_state['node_source_color'] = 'rgba(87,85,96,1)'
 
 
-def main_selector():
+def update_inputs(bot_id, start_date, end_date, node_source, min_width, max_steps, include_handoff, include_no_handoff):
+    if bot_id != st.session_state['bot_id'] or \
+            node_source != st.session_state['node_source'] or \
+            start_date != st.session_state['start_date'] or \
+            end_date != st.session_state['end_date'] or \
+            min_width != st.session_state['min_width'] or \
+            max_steps != st.session_state['max_steps'] or \
+            include_handoff != st.session_state['include_handoff'] or \
+            include_no_handoff != st.session_state['include_no_handoff']:
+        st.session_state['include_handoff'] = include_handoff
+        st.session_state['include_no_handoff'] = include_no_handoff
+        st.session_state['bot_id'] = bot_id
+        st.session_state['node_source'] = node_source
+        st.session_state['start_date'] = start_date
+        st.session_state['end_date'] = end_date
+        st.session_state['update_sankey'] = True
+        st.session_state['start_date'] = st.session_state['start_date'].strftime(
+            '%Y-%m-%d')
+        st.session_state['end_date'] = st.session_state['end_date'].strftime(
+            '%Y-%m-%d')
+        st.session_state['min_width'] = min_width
+        st.session_state['max_steps'] = max_steps
+
+        if st.session_state['session_default'] is False:
+            if st.session_state['time_unit'] == 'MINUTES':
+                st.session_state['session_minutes'] = st.session_state['number_time']
+            elif st.session_state['time_unit'] == 'HOURS':
+                st.session_state['session_hours'] = st.session_state['number_time']
+            elif st.session_state['time_unit'] == 'DAYS':
+                st.session_state['session_days'] = st.session_state['number_time']
+        else:
+            st.session_state['session_days'] = 30
+
+
+def st_header():
     st.image('./img/ht_logo.png', width=100)
     st_1, st_2 = st.columns([1, 3])
     st_1.header('Bot visualization')
@@ -80,6 +115,34 @@ def main_selector():
     <h2 style="font-size:18px;">Bot settings</h2>
     """
     st.markdown(html_bot_setting, unsafe_allow_html=True)
+
+
+def auto_width():
+    data = get_sankey_fig(bot_id=st.session_state['bot_id'],
+                          start_date=st.session_state['start_date'],
+                          end_date=st.session_state['end_date'],
+                          node_source=st.session_state['node_source'],
+                          max_steps=st.session_state['max_steps'],
+                          min_width=1,
+                          include_handoff=st.session_state['include_handoff'],
+                          include_no_handoff=st.session_state['include_no_handoff'],
+                          filter_out_nodes=st.session_state['filter_out_nodes'],
+                          session_minutes=st.session_state.get(
+        'session_minutes', None),
+        session_hours=st.session_state.get(
+        'session_hours', None),
+        session_days=st.session_state.get(
+        'session_days', None),
+    )
+    df = pd.DataFrame(data)
+    df = df[df.target_order <= st.session_state['max_steps']]
+    min_width_auto = np.percentile(df.transition_count.unique(), 50)
+    st.session_state['min_width'] = round(min_width_auto)
+
+
+def main_selector():
+    st_header()
+
     st_1,  st_2, st_3, st_4 = st.columns(
         [1, 1, 1, 1])
 
@@ -119,25 +182,7 @@ def main_selector():
     st_r.write(' ')
     st_r.write(' ')
     if st_r.button('Auto',  disabled=bot_id is None, help='Automatically set the minimum width'):
-        data = get_sankey_fig(bot_id=st.session_state['bot_id'],
-                              start_date=st.session_state['start_date'],
-                              end_date=st.session_state['end_date'],
-                              node_source=st.session_state['node_source'],
-                              max_steps=st.session_state['max_steps'],
-                              min_width=1,
-                              include_handoff=st.session_state['include_handoff'],
-                              include_no_handoff=st.session_state['include_no_handoff'],
-                              filter_out_nodes=st.session_state['filter_out_nodes'],
-                              session_minutes=st.session_state.get(
-            'session_minutes', None),
-            session_hours=st.session_state.get(
-            'session_hours', None),
-            session_days=st.session_state.get(
-            'session_days', None),
-        )
-        df = pd.DataFrame(data)
-        min_width_auto = df.transition_count.quantile(0.95)
-        st.session_state['min_width'] = round(min_width_auto)
+        auto_width()
 
     min_width = st_l.number_input(
         'Minimum nº of users in a path', value=st.session_state['min_width'], min_value=1,  disabled=(bot_id is None), help='Minimum number of users going through the same path. Increasing this helps you focus on paths that are more common')
@@ -158,63 +203,13 @@ def main_selector():
     <p>The length of a session defined by your organisation is: <b>30 days</b></p>
     """
     st.markdown(html_sesion_time, unsafe_allow_html=True)
-    # Filter out nodes tool
-    # filter_out_nodes = st_2.multiselect('FILTER OUT NODES', list_nodes,
-    #                                     format_func=clean_node_names, max_selections=99, help="Exclude nodes from the graph bypassing them")
-
-    # Change session time
-    # session_default = st.checkbox(
-    #     'DEFAULT', value=True, disabled=bot_id is None)
-    # number_time = st.number_input(
-    #     'NUMBER', value=30, min_value=1, max_value=10000, disabled=session_default)
-    # time_unit = st.selectbox(
-    #     'UNIT', ['MINUTES', 'HOURS', 'DAYS'], index=2, disabled=session_default)
 
     if bot_id is None:
         st_circle_logo()
         return
 
-    if bot_id != st.session_state['bot_id'] or \
-            node_source != st.session_state['node_source'] or \
-            start_date != st.session_state['start_date'] or \
-            end_date != st.session_state['end_date'] or \
-            min_width != st.session_state['min_width'] or \
-            max_steps != st.session_state['max_steps'] or \
-            include_handoff != st.session_state['include_handoff'] or \
-            include_no_handoff != st.session_state['include_no_handoff']:
-        # session_default != st.session_state['session_default'] or \
-        # number_time != st.session_state['number_time'] or \
-        # time_unit != st.session_state['time_unit']
-        # or \ filter_out_nodes != st.session_state['filter_out_nodes']:
-
-        # st.session_state['filter_out_nodes'] = filter_out_nodes
-        # st.session_state['session_default'] = session_default
-        # st.session_state['number_time'] = number_time
-        # st.session_state['time_unit'] = time_unit
-
-        st.session_state['include_handoff'] = include_handoff
-        st.session_state['include_no_handoff'] = include_no_handoff
-        st.session_state['bot_id'] = bot_id
-        st.session_state['node_source'] = node_source
-        st.session_state['start_date'] = start_date
-        st.session_state['end_date'] = end_date
-        st.session_state['update_sankey'] = True
-        st.session_state['start_date'] = st.session_state['start_date'].strftime(
-            '%Y-%m-%d')
-        st.session_state['end_date'] = st.session_state['end_date'].strftime(
-            '%Y-%m-%d')
-        st.session_state['min_width'] = min_width
-        st.session_state['max_steps'] = max_steps
-
-        if st.session_state['session_default'] is False:
-            if st.session_state['time_unit'] == 'MINUTES':
-                st.session_state['session_minutes'] = st.session_state['number_time']
-            elif st.session_state['time_unit'] == 'HOURS':
-                st.session_state['session_hours'] = st.session_state['number_time']
-            elif st.session_state['time_unit'] == 'DAYS':
-                st.session_state['session_days'] = st.session_state['number_time']
-        else:
-            st.session_state['session_days'] = 30
+    update_inputs(bot_id, start_date, end_date, node_source,
+                  min_width, max_steps, include_handoff, include_no_handoff)
 
 
 def sk_section():
