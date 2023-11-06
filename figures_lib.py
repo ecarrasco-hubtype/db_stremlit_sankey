@@ -71,18 +71,18 @@ def plotly_sankey(data):
     legends_data = []
     if not st.session_state['include_handoff'] and not st.session_state['include_no_handoff']:
         legends_data += [
-            ('rgba(0, 0, 0, 0.2)', "all", 'Paths', 'arrow-right'),
+            ('rgba(165, 165, 173, 0.2)', "all", 'Paths', 'arrow-right'),
         ]
 
     else:
         if st.session_state['include_handoff']:
             legends_data += (
-                'rgba(110, 73, 255, 0.8)', "with handoff", 'Paths', 'arrow-right'
+                'rgba(204, 53, 89, 0.2)', "with handoff", 'Paths', 'arrow-right'
             ),
 
         if st.session_state['include_no_handoff']:
             legends_data += (
-                'rgba(255, 187, 203, 0.5)', "without handoff", 'Paths', 'arrow-right'
+                'rgba(110, 73, 255, 0.2)', "without handoff", 'Paths', 'arrow-right'
             ),
 
     if st.session_state['node_source'] is not None and st.session_state['node_source'] != 'HANDOFF':
@@ -91,7 +91,7 @@ def plotly_sankey(data):
         ]
 
     legends_data += [
-        ('rgba(110,73,255,1)', "Handoff", "Nodes", 'square'),
+        ('rgba(204,53,89,1)', "Handoff", "Nodes", 'square'),
         ('rgba(167, 165, 173, 1)', "Regular ", "Nodes", 'square'),
 
     ]

@@ -66,7 +66,7 @@ def init_st():
             len(st.session_state['list_nodes'])
         st.session_state['color_map'] = dict(
             zip(st.session_state['list_nodes'], colors))
-        st.session_state['color_map']['HANDOFF'] = 'rgba(110,73,255,1)'
+        st.session_state['color_map']['HANDOFF'] = 'rgba(204,53,89,1)'
         st.session_state['node_source_color'] = 'rgba(87,85,96,1)'
 
 
