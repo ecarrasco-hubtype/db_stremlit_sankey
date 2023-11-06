@@ -152,7 +152,7 @@ def plotly_sankey(data):
             ),
 
             hoverlabel=dict(
-                font=dict(color='rgba(87,85,96,1)'),
+                font=dict(color='rgba(39,38,43,1)'),
             )
         )
     )

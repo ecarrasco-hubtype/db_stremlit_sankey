@@ -79,9 +79,9 @@ def update_inputs(bot_id, start_date, end_date, node_source, min_width, max_step
             max_steps != st.session_state['max_steps'] or \
             include_handoff != st.session_state['include_handoff'] or \
             include_no_handoff != st.session_state['include_no_handoff']:
+
         st.session_state['include_handoff'] = include_handoff
         st.session_state['include_no_handoff'] = include_no_handoff
-        st.session_state['bot_id'] = bot_id
         st.session_state['node_source'] = node_source
         st.session_state['start_date'] = start_date
         st.session_state['end_date'] = end_date
@@ -90,8 +90,14 @@ def update_inputs(bot_id, start_date, end_date, node_source, min_width, max_step
             '%Y-%m-%d')
         st.session_state['end_date'] = st.session_state['end_date'].strftime(
             '%Y-%m-%d')
-        st.session_state['min_width'] = min_width
         st.session_state['max_steps'] = max_steps
+        if st.session_state['bot_id'] != bot_id:
+            st.session_state['bot_id'] = bot_id
+            st.session_state['min_width'] = auto_width()
+            st.experimental_rerun()
+        else:
+            st.session_state['bot_id'] = bot_id
+            st.session_state['min_width'] = min_width
 
         if st.session_state['session_default'] is False:
             if st.session_state['time_unit'] == 'MINUTES':
@@ -136,8 +142,8 @@ def auto_width():
     )
     df = pd.DataFrame(data)
     df = df[df.target_order <= st.session_state['max_steps']]
-    min_width_auto = np.percentile(df.transition_count.unique(), 50)
-    st.session_state['min_width'] = round(min_width_auto)
+    st.write(df.transition_count.quantile(0.9))
+    return round(df.transition_count.quantile(0.9))
 
 
 def main_selector():
@@ -177,14 +183,8 @@ def main_selector():
         [1, 1, 1, 1])
     node_source = st_1.selectbox(
         'Starting node', list_nodes, format_func=clean_node_names, index=None)
-    st_l, st_r = st_2.columns([7, 2])
 
-    st_r.write(' ')
-    st_r.write(' ')
-    if st_r.button('Auto',  disabled=bot_id is None, help='Automatically set the minimum width'):
-        auto_width()
-
-    min_width = st_l.number_input(
+    min_width = st_2.number_input(
         'Minimum nº of users in a path', value=st.session_state['min_width'], min_value=1,  disabled=(bot_id is None), help='Minimum number of users going through the same path. Increasing this helps you focus on paths that are more common')
 
     max_steps = st_3.number_input(
@@ -199,14 +199,14 @@ def main_selector():
     include_no_handoff = st_n.checkbox(
         'no handoff', value=False, disabled=bot_id is None, help='This helps you filter out paths that ended with a handoff')
 
-    html_sesion_time = """
-    <p>The length of a session defined by your organisation is: <b>30 days</b></p>
-    """
-    st.markdown(html_sesion_time, unsafe_allow_html=True)
-
     if bot_id is None:
         st_circle_logo()
         return
+    else:
+        html_sesion_time = """
+        <p>The parameter "end session time"  of your bot is: <b>30 days</b></p>
+        """
+        st.markdown(html_sesion_time, unsafe_allow_html=True)
 
     update_inputs(bot_id, start_date, end_date, node_source,
                   min_width, max_steps, include_handoff, include_no_handoff)
