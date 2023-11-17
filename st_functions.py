@@ -12,8 +12,6 @@ from config import bot_id_name_dic
 import pandas as pd
 import numpy as np
 
-today = dt.datetime.today()
-
 
 def streamlit_square_color(color, size=10):
     html = f'<div style="background-color: {color}; width: {size}px; height: {size}px; border-radius: 50%; display: inline-block; margin-right: 5px;"></div>'
@@ -82,7 +80,7 @@ def update_inputs(bot_id, start_date, end_date, node_source, min_width, max_step
 
         st.session_state['include_handoff'] = include_handoff
         st.session_state['include_no_handoff'] = include_no_handoff
-        st.session_state['node_source'] = node_source
+
         st.session_state['start_date'] = start_date
         st.session_state['end_date'] = end_date
         st.session_state['update_sankey'] = True
@@ -91,12 +89,14 @@ def update_inputs(bot_id, start_date, end_date, node_source, min_width, max_step
         st.session_state['end_date'] = st.session_state['end_date'].strftime(
             '%Y-%m-%d')
         st.session_state['max_steps'] = max_steps
-        if st.session_state['bot_id'] != bot_id:
+        if st.session_state['bot_id'] != bot_id or st.session_state['node_source'] != node_source:
             st.session_state['bot_id'] = bot_id
+            st.session_state['node_source'] = node_source
             st.session_state['min_width'] = auto_width()
             st.experimental_rerun()
         else:
             st.session_state['bot_id'] = bot_id
+            st.session_state['node_source'] = node_source
             st.session_state['min_width'] = min_width
 
         if st.session_state['session_default'] is False:
@@ -142,8 +142,7 @@ def auto_width():
     )
     df = pd.DataFrame(data)
     df = df[df.target_order <= st.session_state['max_steps']]
-    st.write(df.transition_count.quantile(0.9))
-    return round(df.transition_count.quantile(0.9))
+    return round(df.transition_count.quantile(0.8))
 
 
 def main_selector():
@@ -169,11 +168,11 @@ def main_selector():
     else:
         list_nodes = []
 
-    start_date = st_2.date_input('From', value=today - dt.timedelta(days=30),
-                                 min_value=st.session_state['min_date'], max_value=today, disabled=bot_id is None)
+    start_date = st_2.date_input('From', value=dt.datetime.today() - dt.timedelta(days=3),
+                                 min_value=st.session_state['min_date'], max_value=dt.datetime.today(), disabled=bot_id is None)
 
     end_date = st_3.date_input(
-        'to', value=today, min_value=st.session_state['min_date'], max_value=today, disabled=bot_id is None)
+        'to', value=dt.datetime.today(), min_value=st.session_state['min_date'], max_value=dt.datetime.today(), disabled=bot_id is None)
 
     html_bot_viz_pref = """
     <h2 style="font-size:18px;">Visualization preferences</h2>
@@ -185,7 +184,7 @@ def main_selector():
         'Starting node', list_nodes, format_func=clean_node_names, index=None)
 
     min_width = st_2.number_input(
-        'Minimum nº of users in a path', value=st.session_state['min_width'], min_value=1,  disabled=(bot_id is None), help='Minimum number of users going through the same path. Increasing this helps you focus on paths that are more common')
+        'Minimum nº of users in a path', value=st.session_state['min_width'], min_value=1,  disabled=(bot_id is None), help='Minimum number of users going through the same path. Increasing this helps you focus on paths that are more common. This number is AUTO CALCULATED every time you change bot or starting node.')
 
     max_steps = st_3.number_input(
         'Maximum nº steps', value=5, min_value=2, max_value=100, disabled=bot_id is None, help='Maximum path length (in number of steps) that you want to show')

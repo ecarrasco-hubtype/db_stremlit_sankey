@@ -148,11 +148,12 @@ def plotly_sankey(data):
                 {0: 'no handoff', 1: 'handoff', 2: 'all paths'}
             ),  df['transition_count']), axis=-1),
             hovertemplate='<br><b>FROM</b>: %{source.label}<br><b>TO</b>: %{target.label}<br><br>TRAFFIC: <b>%{customdata[1]}</b><b><extra>%{customdata[0]}</b></extra>',
-        ))
+        )
+    )
     ]
 
     traces_main = sankey + traces_paths
-    layout_oaths = go.Layout(
+    layout_paths = go.Layout(
         dict(
             showlegend=True,
             legend=dict(
@@ -165,11 +166,12 @@ def plotly_sankey(data):
                 font=dict(color='rgba(39,38,43,1)'),
             ),
             margin=dict(l=0, r=0, t=0, b=0),
+            height=500
         )
     )
 
     fig_main = go.Figure(data=traces_main,
-                         layout=layout_oaths
+                         layout=layout_paths
 
                          )
 
