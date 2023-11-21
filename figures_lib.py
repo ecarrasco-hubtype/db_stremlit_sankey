@@ -58,16 +58,15 @@ def plotly_sankey(data):
     df, df_nodes = pandas_from_sankey_data(data)
     if df is None or df_nodes is None:
         return None
+    df_nodes['node_color'] = st.session_state['color_regular_node']
 
-    # Nodes colore
-    df_nodes['node_color'] = df_nodes['node'].map(
-        st.session_state['color_map'])
-
-    if st.session_state['node_source'] is not None and st.session_state['node_source'] != 'HANDOFF':
+    if st.session_state['node_source'] is not None:
         df_nodes.loc[(df_nodes['node'] == st.session_state['node_source']) & (df_nodes['order'] == 1),
-                     'node_color'] = st.session_state['node_source_color']
+                     'node_color'] = st.session_state['color_source_node']
 
-    # Legends data
+    df_nodes.loc[df_nodes['node'] == 'HANDOFF',
+                 'node_color'] = st.session_state['color_handoff_node']
+
     legends_paths = []
     if not st.session_state['include_handoff'] and not st.session_state['include_no_handoff']:
         legends_paths += [
@@ -199,6 +198,6 @@ def plotly_sankey(data):
     fig_nodes.update_xaxes(visible=False)
     fig_nodes.update_yaxes(visible=False)
     fig_nodes.update_layout(
-        height=50,  # Alto en píxeles
+        height=100,  # Alto en píxeles
     )
     return fig_main, fig_nodes

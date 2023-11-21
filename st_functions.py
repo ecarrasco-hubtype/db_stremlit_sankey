@@ -1,16 +1,16 @@
 # , get_funnel, get_handoff_top, get_path_list, get_loop_nodes
-from data_lib import get_bot_list_nodes, get_sankey_fig
-from figures_lib import plotly_sankey
+from data_lib import get_bot_list_nodes, get_sankey_fig, get_bot_id_name_from_org_id
 
 import streamlit as st
 import streamlit.components.v1 as components
 
+from figures_lib import plotly_sankey
 
 import datetime as dt
-from config import bot_id_name_dic
+from config import email_company_dic
 
 import pandas as pd
-import numpy as np
+import re
 
 
 def streamlit_square_color(color, size=10):
@@ -32,15 +32,56 @@ def st_circle_logo():
                   width=100, use_column_width=True)
 
 
+def get_user_email():
+    email_from_user = st.experimental_user.get('email')
+
+    if not email_from_user:
+        return None
+
+    email_str = str(email_from_user)
+    match = re.search(r'@([a-zA-Z0-9.-]+)', email_str)
+
+    if not match:
+        return None
+
+    dominio = match.group(1).lower()
+    return dominio
+
+
+def get_dicc_org_id_from_user():
+    email_company = st.session_state['email_company']
+    if email_company is None:
+        return None
+
+    return email_company_dic.get(email_company, email_company_dic['hubtype'])
+
+
+def color_session():
+    st.session_state['color_regular_node'] = 'rgba(167, 165, 173, 1)'
+    st.session_state['color_handoff_node'] = 'rgba(204,53,89,1)'
+    st.session_state['color_source_node'] = 'rgba(87,85,96,1)'
+
+
 def init_st():
     if 'init' not in st.session_state:
         st.set_page_config(layout="wide")
         st.session_state['init'] = True
+        st.session_state['email_company'] = get_user_email()
+        st.session_state['dict_company_name_id'] = get_dicc_org_id_from_user()
+        st.session_state['company_name'] = list(
+            st.session_state['dict_company_name_id'].keys())[0]
+        st.session_state['company_id'] = st.session_state['dict_company_name_id'].get(
+            st.session_state['company_name'], None)
+
+        st.session_state['dict_bot_name_id'] = get_bot_id_name_from_org_id(
+            st.session_state['company_id'])
+        st.session_state['dict_bot_id_nodes'] = get_bot_list_nodes(
+            st.session_state['company_id'])
+
         st.session_state['bot_id'] = None
         st.session_state['node_source'] = None
         st.session_state['start_date'] = None
         st.session_state['end_date'] = None
-        st.session_state['dict_bot_id_nodes'] = get_bot_list_nodes()
         st.session_state['min_date'] = dt.datetime.strptime(
             '2023-09-12', '%Y-%m-%d')
 
@@ -51,76 +92,70 @@ def init_st():
         st.session_state['include_no_handoff'] = True
         st.session_state['filter_out_nodes'] = None
         st.session_state['session_default'] = True
-        st.session_state['number_time'] = 30
-        st.session_state['time_unit'] = 'DAYS'
         st.session_state['auto_width'] = True
 
-        nodes_set = set()
-        for _, nodes_bot_id in st.session_state['dict_bot_id_nodes'].items():
-            nodes_set.update(nodes_bot_id)
-        st.session_state['list_nodes'] = sorted(list(nodes_set) + ['HANDOFF'])
 
-        colors = ['rgba(167, 165, 173, 1)'] * \
-            len(st.session_state['list_nodes'])
-        st.session_state['color_map'] = dict(
-            zip(st.session_state['list_nodes'], colors))
-        st.session_state['color_map']['HANDOFF'] = 'rgba(204,53,89,1)'
-        st.session_state['node_source_color'] = 'rgba(87,85,96,1)'
+def update_inputs(bot_id, start_date, end_date, node_source, min_width, max_steps, include_handoff, include_no_handoff, company_name):
+    session_state = st.session_state
 
+    if session_state['company_name'] != company_name:
+        session_state['company_name'] = company_name
+        session_state['org_id'] = session_state['dict_company_name_id'].get(
+            company_name, None)
+        session_state['dict_bot_name_id'] = get_bot_id_name_from_org_id(
+            session_state['org_id'])
+        session_state['dict_bot_id_nodes'] = get_bot_list_nodes(
+            session_state['org_id'])
+        st.rerun()
+    if any(
+        getattr(session_state, attr) != arg
+        for attr, arg in [
+            ('bot_id', bot_id),
+            ('node_source', node_source),
+            ('start_date', start_date),
+            ('end_date', end_date),
+            ('min_width', min_width),
+            ('max_steps', max_steps),
+            ('include_handoff', include_handoff),
+            ('include_no_handoff', include_no_handoff),
+        ]
+    ):
+        session_state['include_handoff'] = include_handoff
+        session_state['include_no_handoff'] = include_no_handoff
+        session_state['start_date'] = start_date.strftime('%Y-%m-%d')
+        session_state['end_date'] = end_date.strftime('%Y-%m-%d')
+        session_state['update_sankey'] = True
+        session_state['max_steps'] = max_steps
 
-def update_inputs(bot_id, start_date, end_date, node_source, min_width, max_steps, include_handoff, include_no_handoff):
-    if bot_id != st.session_state['bot_id'] or \
-            node_source != st.session_state['node_source'] or \
-            start_date != st.session_state['start_date'] or \
-            end_date != st.session_state['end_date'] or \
-            min_width != st.session_state['min_width'] or \
-            max_steps != st.session_state['max_steps'] or \
-            include_handoff != st.session_state['include_handoff'] or \
-            include_no_handoff != st.session_state['include_no_handoff']:
-
-        st.session_state['include_handoff'] = include_handoff
-        st.session_state['include_no_handoff'] = include_no_handoff
-
-        st.session_state['start_date'] = start_date
-        st.session_state['end_date'] = end_date
-        st.session_state['update_sankey'] = True
-        st.session_state['start_date'] = st.session_state['start_date'].strftime(
-            '%Y-%m-%d')
-        st.session_state['end_date'] = st.session_state['end_date'].strftime(
-            '%Y-%m-%d')
-        st.session_state['max_steps'] = max_steps
-        if st.session_state['bot_id'] != bot_id or st.session_state['node_source'] != node_source:
-            st.session_state['bot_id'] = bot_id
-            st.session_state['node_source'] = node_source
-            st.session_state['min_width'] = auto_width()
-            st.experimental_rerun()
+        if any(
+            getattr(session_state, attr) != arg
+            for attr, arg in [('bot_id', bot_id), ('node_source', node_source)]
+        ):
+            session_state['bot_id'] = bot_id
+            session_state['node_source'] = node_source
+            session_state['min_width'] = auto_width()
+            color_session()
+            st.rerun()
         else:
-            st.session_state['bot_id'] = bot_id
-            st.session_state['node_source'] = node_source
-            st.session_state['min_width'] = min_width
-
-        if st.session_state['session_default'] is False:
-            if st.session_state['time_unit'] == 'MINUTES':
-                st.session_state['session_minutes'] = st.session_state['number_time']
-            elif st.session_state['time_unit'] == 'HOURS':
-                st.session_state['session_hours'] = st.session_state['number_time']
-            elif st.session_state['time_unit'] == 'DAYS':
-                st.session_state['session_days'] = st.session_state['number_time']
-        else:
-            st.session_state['session_days'] = 30
+            session_state['bot_id'] = bot_id
+            session_state['node_source'] = node_source
+            session_state['min_width'] = min_width
 
 
 def st_header():
-    st.image('./img/ht_logo.png', width=100)
-    st_1, st_2 = st.columns([1, 3])
-    st_1.header('Bot visualization')
-    st_2.write('')
-    st_2.write('')
-    st_2.write('Understand how users navigate your bot')
-    html_bot_setting = """
-    <h2 style="font-size:18px;">Bot settings</h2>
-    """
-    st.markdown(html_bot_setting, unsafe_allow_html=True)
+    st_1, st_2, st_3 = st.columns([1, 2, 8])
+    st_1.write('')
+    st_1.write('')
+    st_1.image('./img/ht_logo.png', width=100)
+
+    st_2.header('Bot visualization')
+    st_3.write('')
+    st_3.write('')
+    st_3.write('Understand how users navigate your bot')
+    # html_bot_setting = """
+    # <h2 style="font-size:18px;">Bot settings</h2>
+    # """
+    # st.markdown(html_bot_setting, unsafe_allow_html=True)
 
 
 def auto_width():
@@ -132,56 +167,46 @@ def auto_width():
                           min_width=1,
                           include_handoff=st.session_state['include_handoff'],
                           include_no_handoff=st.session_state['include_no_handoff'],
-                          filter_out_nodes=st.session_state['filter_out_nodes'],
-                          session_minutes=st.session_state.get(
-        'session_minutes', None),
-        session_hours=st.session_state.get(
-        'session_hours', None),
-        session_days=st.session_state.get(
-        'session_days', None),
-    )
-    df = pd.DataFrame(data)
-    df = df[df.target_order <= st.session_state['max_steps']]
-    return round(df.transition_count.quantile(0.8))
+                          filter_out_nodes=st.session_state['filter_out_nodes']
+                          )
+    try:
+        df = pd.DataFrame(data)
+        df = df[df.target_order <= st.session_state['max_steps']]
+        return round(df.transition_count.quantile(0.8))
+    except Exception:
+        return 1
 
 
 def main_selector():
     st_header()
-
     st_1,  st_2, st_3, st_4 = st.columns(
         [1, 1, 1, 1])
+    company_name = st_4.selectbox(
+        'Company', list(st.session_state['dict_company_name_id'].keys()), format_func=lambda x: x.upper())
+    bot_name = st_1.selectbox(
+        'Bot', st.session_state['dict_bot_name_id'].keys(), index=None, format_func=lambda x: x.upper())
+    bot_id = st.session_state['dict_bot_name_id'].get(bot_name, None)
 
-    st.session_state['list_bots'] = list(st.session_state['dict_bot_id_nodes'].keys(
-    )) + ['HANDOFF'] if st.session_state['dict_bot_id_nodes'].keys() is not None else None
+    st.session_state['list_nodes'] = st.session_state['dict_bot_id_nodes'].get(
+        bot_id, [])
+    if st.session_state['list_nodes'] != [] and 'HANDOFF' not in st.session_state['list_nodes']:
+        st.session_state['list_nodes'] += ['HANDOFF']
+        st.session_state['list_nodes'] = sorted(st.session_state['list_nodes'])
 
-    bot_list = [b for b in st.session_state['list_bots']
-                if b in bot_id_name_dic.keys()]
-    bot_id = st_1.selectbox(
-        'Bot', bot_list, index=None, format_func=lambda x: bot_id_name_dic.get(x, x))
-
-    st.session_state['list_nodes'] = sorted(st.session_state['dict_bot_id_nodes'].get(
-        bot_id, []))
-
-    if st.session_state['list_nodes'] != []:
-        list_nodes = sorted(
-            st.session_state['list_nodes'] + ['HANDOFF'])
-    else:
-        list_nodes = []
-
-    start_date = st_2.date_input('From', value=dt.datetime.today() - dt.timedelta(days=3),
+    start_date = st_2.date_input('From', value=dt.datetime.today() - dt.timedelta(days=7),
                                  min_value=st.session_state['min_date'], max_value=dt.datetime.today(), disabled=bot_id is None)
 
     end_date = st_3.date_input(
         'to', value=dt.datetime.today(), min_value=st.session_state['min_date'], max_value=dt.datetime.today(), disabled=bot_id is None)
 
-    html_bot_viz_pref = """
-    <h2 style="font-size:18px;">Visualization preferences</h2>
-    """
-    st.markdown(html_bot_viz_pref, unsafe_allow_html=True)
+    # html_bot_viz_pref = """
+    # <h2 style="font-size:18px;">Visualization preferences</h2>
+    # """
+    # st.markdown(html_bot_viz_pref, unsafe_allow_html=True)
     st_1,  st_2, st_3, st_4 = st.columns(
         [1, 1, 1, 1])
     node_source = st_1.selectbox(
-        'Starting node', list_nodes, format_func=clean_node_names, index=None)
+        'Starting node', st.session_state['list_nodes'], format_func=clean_node_names, index=None, disabled=st.session_state['bot_id'] is None, help='This is the node where the user started the conversation. If you want to see all the possible paths, select the welcome node in your flow.')
 
     min_width = st_2.number_input(
         'Minimum nº of users in a path', value=st.session_state['min_width'], min_value=1,  disabled=(bot_id is None), help='Minimum number of users going through the same path. Increasing this helps you focus on paths that are more common. This number is AUTO CALCULATED every time you change bot or starting node.')
@@ -198,7 +223,9 @@ def main_selector():
     include_no_handoff = st_n.checkbox(
         'no handoff', value=False, disabled=bot_id is None, help='This helps you filter out paths that ended with a handoff')
 
-    if bot_id is None:
+    update_inputs(bot_id, start_date, end_date, node_source,
+                  min_width, max_steps, include_handoff, include_no_handoff, company_name)
+    if st.session_state['bot_id'] is None:
         st_circle_logo()
         return
     else:
@@ -206,9 +233,6 @@ def main_selector():
         <p>The parameter "end session time"  of your bot is: <b>30 days</b></p>
         """
         st.markdown(html_sesion_time, unsafe_allow_html=True)
-
-    update_inputs(bot_id, start_date, end_date, node_source,
-                  min_width, max_steps, include_handoff, include_no_handoff)
 
 
 def sk_section():
@@ -254,7 +278,7 @@ def sk_section():
             st_circle_logo()
             _, st_1, _ = st.columns([6, 2, 6])
             st_1.warning('No data available')
-            st.write(str(e))
+            # st.write(str(e))
 
 
 # NOT USED:

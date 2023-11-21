@@ -1,7 +1,17 @@
 from tb import get_api
 
 
-def get_bot_list_nodes(org_id='98bb4472-1fba-4a2e-8a92-9e2ca0ad4ffc'):
+def get_bot_id_name_from_org_id(org_id):
+    params = dict(
+        org_id=org_id,
+    )
+    response = get_api('bot_id_name_from_org_id', params=params)
+    if 'error' in response.keys():
+        raise Exception(response['error'])
+    return {r['name']: r['id'] for r in response['data']}
+
+
+def get_bot_list_nodes(org_id):
 
     params = dict(
         org_id=org_id,
@@ -22,7 +32,7 @@ def get_bot_list_nodes(org_id='98bb4472-1fba-4a2e-8a92-9e2ca0ad4ffc'):
     return dict_group
 
 
-def get_sankey_fig(bot_id, start_date, end_date, node_source, min_width, max_steps, include_handoff, include_no_handoff, filter_out_nodes, session_minutes, session_hours, session_days):
+def get_sankey_fig(bot_id, start_date, end_date, node_source, min_width, max_steps, include_handoff, include_no_handoff, filter_out_nodes, session_minutes=None, session_hours=None, session_days=None):
     params = dict(
         node_source=node_source,
         bot_id=bot_id,
@@ -38,7 +48,6 @@ def get_sankey_fig(bot_id, start_date, end_date, node_source, min_width, max_ste
         session_hours=session_hours,
         session_days=session_days,
     )
-    # print(params)
     response = get_api('sankey', params=params)
     if 'error' in response.keys():
         raise Exception(response['error'])
