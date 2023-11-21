@@ -67,6 +67,7 @@ def init_st():
         st.set_page_config(layout="wide")
         st.session_state['init'] = True
         st.session_state['email_company'] = get_user_email()
+        st.write(st.session_state['email_company'])
         st.session_state['dict_company_name_id'] = get_dicc_org_id_from_user()
         st.session_state['company_name'] = list(
             st.session_state['dict_company_name_id'].keys())[0]
