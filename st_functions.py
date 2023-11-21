@@ -34,7 +34,7 @@ def st_circle_logo():
 
 def get_user_email():
     email_from_user = st.experimental_user.get('email')
-
+    st.write(st.experimental_user)
     if not email_from_user:
         return None
 
