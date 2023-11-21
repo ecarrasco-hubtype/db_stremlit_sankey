@@ -34,12 +34,10 @@ def st_circle_logo():
 
 def get_user_email():
     email_from_user = st.experimental_user.get('email')
-    st.write(st.experimental_user)
     if not email_from_user:
         return None
 
-    email_str = str(email_from_user)
-    match = re.search(r'@([a-zA-Z0-9.-]+)', email_str)
+    match = re.search(r'@([a-zA-Z0-9.-]+)', str(email_from_user))
 
     if not match:
         return None
@@ -49,11 +47,9 @@ def get_user_email():
 
 
 def get_dicc_org_id_from_user():
-    email_company = st.session_state['email_company']
-    if email_company is None:
+    if st.session_state['email_company'] is None:
         return None
-
-    return email_company_dic.get(email_company, None)
+    return email_company_dic.get(st.session_state['email_company'], None)
 
 
 def color_session():
@@ -67,7 +63,6 @@ def init_st():
         st.set_page_config(layout="wide")
         st.session_state['init'] = True
         st.session_state['email_company'] = get_user_email()
-        st.write(st.session_state['email_company'])
         st.session_state['dict_company_name_id'] = get_dicc_org_id_from_user()
         st.session_state['company_name'] = list(
             st.session_state['dict_company_name_id'].keys())[0]
@@ -144,7 +139,7 @@ def update_inputs(bot_id, start_date, end_date, node_source, min_width, max_step
 
 
 def st_header():
-    st_1, st_2, st_3 = st.columns([1, 2, 8])
+    st_1, st_2, st_3, st_4 = st.columns([1, 2, 6, 3])
     st_1.write('')
     st_1.write('')
     st_1.image('./img/ht_logo.png', width=100)
@@ -153,6 +148,8 @@ def st_header():
     st_3.write('')
     st_3.write('')
     st_3.write('Understand how users navigate your bot')
+
+    st_4.write(st.session_state['email_company'])
     # html_bot_setting = """
     # <h2 style="font-size:18px;">Bot settings</h2>
     # """
