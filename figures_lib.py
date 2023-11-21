@@ -19,6 +19,7 @@ def pandas_from_sankey_data(data):
 
     df_nodes = pd.concat(
         [df_targets, df_sorces[df_sorces.order == 1]]).drop_duplicates()
+
     df_nodes['x'] = (df_nodes['order'] - 1) / \
         (df_nodes['order'].max()) + 1/(2*df_nodes['order'].max())
 
