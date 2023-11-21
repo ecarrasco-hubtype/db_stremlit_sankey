@@ -53,7 +53,7 @@ def get_dicc_org_id_from_user():
     if email_company is None:
         return None
 
-    return email_company_dic.get(email_company, email_company_dic['hubtype'])
+    return email_company_dic.get(email_company, None)
 
 
 def color_session():
