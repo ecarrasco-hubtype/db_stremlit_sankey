@@ -14,4 +14,9 @@ email_company_dic = {
     'segurcaixa': {
         'Segur Caixa Adeslas': '6b9a52d9-57f4-4504-8a9d-ef0f8c2cc683',
     },
+    'example.com': {
+        'Multiasistencia': '98bb4472-1fba-4a2e-8a92-9e2ca0ad4ffc',
+    },
 }
+
+auto_width_quantile = 0.8

@@ -2,6 +2,7 @@ import plotly.graph_objects as go
 import pandas as pd
 import numpy as np
 import streamlit as st
+import colors
 
 
 def pandas_from_sankey_data(data):
@@ -48,9 +49,11 @@ def pandas_from_sankey_data(data):
 
     df['color'] = df['session_with_handoff'].map(
         {
-            0: 'rgba(110, 73, 255, 0.2)',
-            1: 'rgba(204, 53, 89, 0.2)',
-            2: 'rgba(167, 165, 173, 0.2)'})
+            0: colors.no_handoff_arrow,
+            1: colors.handoff_arrow,
+            2: colors.regular_arrow
+        }
+    )
     return df, df_nodes
 
 
@@ -59,14 +62,14 @@ def plotly_sankey(data):
     df, df_nodes = pandas_from_sankey_data(data)
     if df is None or df_nodes is None:
         return None
-    df_nodes['node_color'] = st.session_state['color_regular_node']
+    df_nodes['node_color'] = colors.regular_node
 
     if st.session_state['node_source'] is not None:
         df_nodes.loc[(df_nodes['node'] == st.session_state['node_source']) & (df_nodes['order'] == 1),
-                     'node_color'] = st.session_state['color_source_node']
+                     'node_color'] = colors.source_node
 
     df_nodes.loc[df_nodes['node'] == 'HANDOFF',
-                 'node_color'] = st.session_state['color_handoff_node']
+                 'node_color'] = colors.handoff_node
 
     legends_paths = []
     if not st.session_state['include_handoff'] and not st.session_state['include_no_handoff']:
@@ -77,22 +80,22 @@ def plotly_sankey(data):
     else:
         if st.session_state['include_handoff']:
             legends_paths += (
-                'rgba(204, 53, 89, 0.2)', "with handoff", 'Paths', 'arrow-right'
+                colors.handoff_arrow, "with handoff", 'Paths', 'arrow-right'
             ),
 
         if st.session_state['include_no_handoff']:
             legends_paths += (
-                'rgba(110, 73, 255, 0.2)', "without handoff", 'Paths', 'arrow-right'
+                colors.no_handoff_arrow, "without handoff", 'Paths', 'arrow-right'
             ),
 
     legends_nodes = [
-        ('rgba(204,53,89,1)', "Handoff", "Nodes", 'square'),
-        ('rgba(167, 165, 173, 1)', "Regular ", "Nodes", 'square'),
+        (colors.handoff_node, "Handoff", "Nodes", 'square'),
+        (colors.regular_node, "Regular ", "Nodes", 'square'),
 
     ]
     if st.session_state['node_source'] is not None and st.session_state['node_source'] != 'HANDOFF':
         legends_nodes += [
-            ('rgba(87,85,96,1)', "Starting", "Nodes", 'square'),
+            (colors.source_node, "Starting", "Nodes", 'square'),
         ]
 
     # Markers legend
@@ -143,7 +146,7 @@ def plotly_sankey(data):
             target=df['i_target'].values,
             value=df['transition_count'].values,
             color=df['color'].values,
-            line=dict(width=1, color='rgba(255, 255, 255, 0.7)'),
+            line=dict(width=1, color=colors.border_arrow),
             customdata=np.stack((df['session_with_handoff'].map(
                 {0: 'no handoff', 1: 'handoff', 2: 'all paths'}
             ),  df['transition_count']), axis=-1),
@@ -163,7 +166,7 @@ def plotly_sankey(data):
             ),
 
             hoverlabel=dict(
-                font=dict(color='rgba(39,38,43,1)'),
+                font=dict(color=colors.hover_font),
             ),
             margin=dict(l=0, r=0, t=0, b=0),
             height=500
